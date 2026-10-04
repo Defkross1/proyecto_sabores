@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load formato_moneda %}
+
+{% block content %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-primary text-white py-3">
+        <h4 class="mb-0">Planifica tu Menú Semanal (Lunes a Viernes)</h4>
+    </div>
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                {% for dia, platos in menus_por_dia.items %}
+                <div class="col-lg col-md-6">
+                    <div class="card h-100 shadow-sm border-light bg-light">
+                        <div class="card-header text-white text-center fw-bold bg-dark">
+                            {{ dia }}
+                        </div>
+                        <div class="card-body p-2">
+                            <div id="contenedor-platos-{{ dia }}">
+                                <div class="mb-2">
+                                    <select name="plato_{{ dia }}" class="form-select form-select-sm mb-2">
+                                        <option value="">(Sin plato)</option>
+                                        {% for p in platos %}
+                                            <option value="{{ p.id }}">{{ p.nombre }} - {{ p.precio|formato_miles }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-dark btn-sm w-100 mt-2" onclick="agregarPlato('{{ dia }}')">+ Agregar otro plato</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-3 mt-3 border-top pt-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Dirección de Entrega:</label>
+                    <select name="direccion" class="form-select" required>
+                        {% for d in direcciones %}
+                            <option value="{{ d.id }}">{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Horario de Entrega:</label>
+                    <select name="horario_entrega" class="form-select" required>
+                        {% for valor, texto in horarios %}
+                            <option value="{{ valor }}">{{ texto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-warning w-100 mt-4 fw-bold py-2">
+                Confirmar y Solicitar Pedido
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function agregarPlato(dia) {
+    const contenedor = document.getElementById('contenedor-platos-' + dia);
+    const primerSelect = contenedor.querySelector('select');
+    if (primerSelect) {
+        const nuevoSelect = primerSelect.cloneNode(true);
+        nuevoSelect.value = "";
+        nuevoSelect.classList.add('mt-2');
+        contenedor.appendChild(nuevoSelect);
+    }
+}
+</script>
+{% endblock %}

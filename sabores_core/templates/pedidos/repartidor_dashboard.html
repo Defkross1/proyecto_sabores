@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3 class="mb-3">Hoja de Reparto y Logística</h3>
+<div class="row g-3">
+    {% for p in pedidos %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm border-0 border-start border-warning border-4">
+            <div class="card-body">
+                <h5 class="card-title">Pedido #{{ p.id }} - <span class="badge bg-secondary">{{ p.horario_entrega }}</span></h5>
+                <p class="mb-1"><strong>Cliente:</strong> {{ p.cliente.nombre }} {{ p.cliente.apellido|default:'' }}</p>
+                <p class="mb-1"><strong>Teléfono:</strong> <a href="tel:{{ p.cliente.telefono }}">{{ p.cliente.telefono }}</a></p>
+                <p class="mb-3 text-danger"><strong>Dirección:</strong> {{ p.direccion }}</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="pedido_id" value="{{ p.id }}">
+                    <button type="submit" class="btn btn-success w-100">
+                        Marcar como Entregado
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><div class="alert alert-info">No hay pedidos pendientes de entrega en este momento.</div></div>
+    {% endfor %}
+</div>
+{% endblock %}

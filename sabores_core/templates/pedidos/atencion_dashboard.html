@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load formato_moneda %}
+
+{% block content %}
+<h3 class="mb-3">Módulo Atención al Cliente: Gestión de Pedidos</h3>
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Cliente</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>Horario</th>
+                        <th>Total</th>
+                        <th>Estado Actual</th>
+                        <th>Acción / Modificar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pedidos %}
+                    <tr>
+                        <td><strong>#{{ p.id }}</strong></td>
+                        <td>{{ p.cliente.nombre }} {{ p.cliente.apellido|default:'' }}</td>
+                        <td>{{ p.cliente.telefono }}</td>
+                        <td>{{ p.direccion }}</td>
+                        <td><span class="badge bg-secondary">{{ p.horario_entrega }}</span></td>
+                        <td><strong class="text-success">{{ p.total|formato_miles }}</strong></td>
+                        <td><span class="badge bg-info text-dark">{{ p.get_estado_display }}</span></td>
+                        <td>
+                            <form method="post" class="d-flex gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="pedido_id" value="{{ p.id }}">
+                                <select name="estado" class="form-select form-select-sm">
+                                    {% for valor, texto in estados %}
+                                        <option value="{{ valor }}" {% if p.estado == valor %}selected{% endif %}>{{ texto }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm">Actualizar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">No existen pedidos solicitados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

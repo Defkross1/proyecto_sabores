@@ -1,0 +1,45 @@
+# Entorno Virtual (VENV)
+
+venv/
+env/
+ENV/
+.venv/
+
+# Python / Bytecode
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Base de datos local
+
+# Evita subir los datos y credenciales de prueba locales
+*.sqlite3
+*.db
+
+# Archivos estáticos y Media
+
+media/
+staticfiles/
+
+# Variables de entorno y secretos
+
+.env
+.env.local
+local_settings.py
+
+# IDEs y Editores de código
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs y depuración
+
+*.log

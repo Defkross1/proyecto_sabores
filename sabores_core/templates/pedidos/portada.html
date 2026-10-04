@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Sección de Portada / Hero -->
+<div class="p-5 mb-4 bg-dark text-white rounded-3 shadow" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80') center/cover;">
+    <div class="container-fluid py-5 text-center">
+        <h1 class="display-5 fw-bold">Disfruta de los Mejores Sabores</h1>
+        <p class="col-md-8 fs-4 mx-auto">Platos caseros preparados con ingredientes frescos y listos para ordenar hasta la puerta de tu hogar o empresa.</p>
+        <a href="#platos" class="btn btn-warning btn-lg text-dark fw-bold shadow mt-2">Ver Menú del Día</a>
+    </div>
+</div>
+
+<!-- Sección de Fotos de Platos -->
+<div class="container my-5" id="platos">
+    <h2 class="text-center mb-2 fw-bold">Nuestros Platos Disponibles</h2>
+    <p class="text-center text-muted mb-4">Todos nuestros platos incluyen <strong>ensalada o consomé opcional</strong>.</p>
+    
+    <div class="row g-4">
+        {% for plato in platos %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <img src="{% static plato.imagen %}" class="card-img-top" alt="{{ plato.nombre }}" style="height: 220px; object-fit: cover;">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title fw-bold">{{ plato.nombre }}</h5>
+                    <p class="card-text text-muted">{{ plato.descripcion }}</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">
+                            🥗 Ensalada o 🍲 Consomé opcional
+                        </span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <span class="text-success fw-bold fs-5">${{ plato.precio }}</span>
+                        
+                        <!-- CORREGIDO: Envía el plato al carrito/procesador para guardarlo automáticamente y llevarlo a Mis Pedidos -->
+                        <a href="{% url 'carrito_pedido' %}?plato={{ forloop.counter }}" class="btn btn-success btn-sm fw-bold">Ir a Pedir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted fs-5">No hay platos disponibles en este momento.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- NUEVA SECCIÓN: Nuestros Chefs -->
+<div class="container my-5 py-4 bg-light rounded-3 shadow-sm">
+    <h2 class="text-center mb-2 fw-bold">Conoce a Nuestros Chefs</h2>
+    <p class="text-center text-muted mb-4">El talento y la pasión detrás de cada receta de "El Comilón".</p>
+    
+    <div class="row g-4 text-center">
+        {% for chef in chefs %}
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100 border-0 bg-transparent">
+                <div class="mx-auto mt-3" style="width: 140px; height: 140px;">
+                    <img src="{% static chef.imagen %}" class="rounded-circle shadow" alt="{{ chef.nombre }}" style="width: 140px; height: 140px; object-fit: cover;">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-1">{{ chef.nombre }}</h5>
+                    <p class="card-text text-muted small">{{ chef.especialidad }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

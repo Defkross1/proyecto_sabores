@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-6">
+        <div class="card shadow border-0 p-4">
+            <h2 class="text-center fw-bold mb-4">🛒 Carrito de Pedidos - Convenio Empresa</h2>
+            
+            {% if plato %}
+            <div class="alert alert-secondary d-flex align-items-center mb-4">
+                <div>
+                    <h6 class="fw-bold mb-1">Estás pidiendo: {{ plato.nombre }}</h6>
+                    <p class="mb-0 text-success fw-bold">${{ plato.precio }} + Ensalada o Consomé opcional</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="empresa_id" class="form-label fw-bold">Empresa en Convenio</label>
+                    <select name="empresa_id" id="empresa_id" class="form-select" required>
+                        <option value="" selected disabled>Seleccione su empresa...</option>
+                        {% for emp in empresas %}
+                            <option value="{{ emp.id }}">{{ emp.nombre }} (RUT: {{ emp.rut }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="rut" class="form-label fw-bold">RUT del Trabajador</label>
+                    <input type="text" class="form-control" id="rut" name="rut" placeholder="Ej: 12345678-9" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="clave" class="form-label fw-bold">Clave de Acceso</label>
+                    <input type="password" class="form-control" id="clave" name="clave" placeholder="********" required>
+                </div>
+
+                <button type="submit" class="btn btn-warning w-100 text-dark fw-bold py-2 shadow-sm">Validar y Confirmar Pedido</button>
+            </form>
+            
+            <div class="text-center mt-3">
+                <a href="{% url 'portada' %}" class="text-muted text-decoration-none">← Volver al inicio</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

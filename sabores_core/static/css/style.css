@@ -1,0 +1,14 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: #d35400 !important;
+}
+
+.card-header-custom {
+    background-color: #2c3e50;
+    color: white;
+}
