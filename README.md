@@ -28,7 +28,27 @@
 **"El Comilón"** es una solución de software desarrollada en **Django** diseñada para optimizar la experiencia de alimentación institucional y corporativa. Permite a los usuarios (trabajadores en convenio o clientes independientes) visualizar platos caseros destacados, planificar su menú semanal de lunes a viernes, personalizar acompañamientos (ensalada o consomé) y gestionar su historial de pedidos con total autonomía y seguridad.
 
 ---
+## 📄 Informe Técnico y Arquitectura del Sistema
 
+### 1. Pila Tecnológica y Componentes del Sistema
+* **Python (Versión 3.14):** Lenguaje de programación base utilizado para la lógica de negocio, manejo de vistas, modelos y validaciones del servidor.
+* **Django (Versión 6.1.1):** Framework web principal encargado del enrutamiento URL (`urls.py`), el mapeo objeto-relacional (`models.py`), el motor de plantillas y el manejo de sesiones y autenticación segura.
+* **SQLite:** Sistema de gestión de bases de datos relacional integrado, utilizado para almacenar de forma persistente la información de usuarios, roles, menús, ítems y transacciones de pedidos.
+* **Pillow:** Biblioteca de procesamiento de imágenes en Python, integrada para la correcta manipulación y renderizado de recursos gráficos (fotografías de platos y perfiles).
+* **Bootstrap (v5.3):** Framework CSS utilizado para proporcionar una interfaz de usuario limpia, responsiva, moderna y estandarizada en todos los dispositivos.
+
+### 2. Módulos y Reglas de Negocio Implementadas
+* **Módulo de Autenticación y Roles (`usuarios`):** Jerarquías de usuario gestionadas mediante un modelo personalizado y decoradores de seguridad estrictos (`@rol_requerido`) para los roles `CLIENTE`, `ATENCION`, `REPARTIDOR` y `GERENTE`. Incluye doble flujo de registro para clientes comunes y corporativos (con validación de RUT institucional y clave fija `empresa123`).
+* **Módulo de Pedidos y Trazabilidad Temporizada (`pedidos`):** 
+  * Unificación automática de ítems en una única orden activa de tipo `SOLICITADO`.
+  * Restricciones temporales basadas estrictamente en la zona horaria real de Chile (`America/Santiago`), bloqueando días pasados (tarjetas rojas), habilitando actuales/futuros (tarjetas verdes) y permitiendo programar los lunes de la semana siguiente los viernes o fines de semana.
+  * Pasarela de selección de métodos de pago (Efectivo, Tarjeta o Transferencia en local o delivery) con bloqueo dinámico de la boleta digital hasta que el pago sea confirmado.
+* **Panel de Administración Gerencial (`gerente_dashboard`):** 
+  * Cálculo automatizado de las ganancias del día en tiempo real (filtrando únicamente pedidos pagados en la fecha chilena actual).
+  * CRUD completo de menús con sincronización directa en la portada principal y soporte de subida de imágenes mediante `ImageField`.
+  * Seguimiento operativo de estados de delivery, consumos detallados de los clientes y listados organizados de cuentas comunes y corporativas.
+
+---
 ## ✨ Características Principales
 
 ### 🛒 Sincronización Interactiva (Portada $\rightarrow$ Historial)
@@ -70,28 +90,41 @@ Sigue estos pasos para clonar y poner en marcha el proyecto en tu entorno local:
 1. **Clonar el repositorio:**
    ```bash
    git clone [https://github.com/Defkross1/proyecto_sabores.git](https://github.com/Defkross1/proyecto_sabores.git)
-   cd proyecto_sabores
+   cd proyecto_sabores-main
+
+
 Crear y activar el entorno virtual:
 
 Bash
 python -m venv venv
 # En Windows (PowerShell):
 .\venv\Scripts\Activate
+
 # En Mac/Linux:
 source venv/bin/activate
+
+
 Instalar las dependencias:
 
 Bash
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+# O alternativamente:
+python -m pip install django Pillow
+
 Aplicar las migraciones de base de datos:
 
 Bash
 python manage.py makemigrations
 python manage.py migrate
+
+
 Crear un superusuario (Opcional para administración):
 
 Bash
 python manage.py createsuperuser
+
+
 Ejecutar el servidor de desarrollo:
 
 Bash
