@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from .forms import RegistroClienteForm, LoginForm, DireccionForm, RegistroEmpresaConvenioForm
 from .models import DireccionCliente
+from pedidos.models import Pedido
 from .validators import ReglaContrasenaSaboresValidator, NoContieneNombreValidator
 
 def login_view(request):
@@ -71,7 +72,6 @@ def perfil_cliente(request):
     if request.method == 'POST':
         accion = request.POST.get('accion')
 
-        # 1. Actualizar teléfono
         if accion == 'actualizar_telefono':
             nuevo_tel = request.POST.get('telefono')
             if nuevo_tel:
@@ -79,7 +79,6 @@ def perfil_cliente(request):
                 usuario.save()
                 messages.success(request, "Teléfono actualizado con éxito.")
 
-        # 2. Agregar nueva dirección
         elif accion == 'nueva_direccion':
             form_direccion = DireccionForm(request.POST)
             if form_direccion.is_valid():
@@ -89,7 +88,6 @@ def perfil_cliente(request):
                 messages.success(request, "Dirección agregada correctamente.")
                 return redirect('perfil_cliente')
 
-        # 3. Cambiar clave con validaciones de seguridad
         elif accion == 'cambiar_clave':
             nueva_clave = request.POST.get('nueva_clave')
             try:
@@ -104,10 +102,13 @@ def perfil_cliente(request):
                     messages.error(request, error)
 
     direcciones = usuario.direcciones.all()
+    historial_compras = Pedido.objects.filter(cliente=usuario).order_by('-fecha_pedido')
+
     return render(request, 'usuarios/perfil.html', {
         'direcciones': direcciones,
         'form_direccion': form_direccion,
-        'puede_eliminar_direccion': direcciones.count() > 1
+        'puede_eliminar_direccion': direcciones.count() > 1,
+        'historial_compras': historial_compras,
     })
 
 @login_required

@@ -20,12 +20,16 @@
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-warning text-dark">{{ pedido.get_estado_display|default:pedido.estado }}</span>
                             
-                            <!-- Botón para Ver / Imprimir Boleta -->
-                            <a href="{% url 'boleta_pedido' pedido.id %}" class="btn btn-info btn-sm text-white">
-                                <i class="fas fa-receipt"></i> Ver Boleta
-                            </a>
+                            <!-- Botón para Ver / Imprimir Boleta (Bloqueado si no está pagado) -->
+                            {% if pedido.pagado %}
+                                <a href="{% url 'boleta_pedido' pedido.id %}" class="btn btn-info btn-sm text-white">
+                                    <i class="fas fa-receipt"></i> Ver Boleta
+                                </a>
+                            {% else %}
+                                <span class="badge bg-secondary text-white">Boleta Bloqueada (Pendiente de pago)</span>
+                            {% endif %}
 
-                            {% if pedido.estado == 'SOLICITADO' %}
+                            {% if pedido.estado == 'SOLICITADO' and not pedido.pagado %}
                                 <a href="{% url 'editar_pedido' pedido.id %}" class="btn btn-outline-light btn-sm">Editar</a>
                                 <a href="{% url 'eliminar_pedido' pedido.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este pedido?');">Eliminar</a>
                             {% endif %}
@@ -65,11 +69,45 @@
                             {% endfor %}
                         </ul>
 
-                        <!-- TOTAL A PAGAR -->
-                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                            <h5 class="fw-bold mb-0">Total a Pagar:</h5>
-                            <h4 class="fw-bold text-success mb-0">{{ pedido.total|formato_miles }}</h4>
+                        <!-- TOTAL Y OPCIÓN DE PAGO -->
+                        <div class="border-top pt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0">Total a Pagar:</h5>
+                                <h4 class="fw-bold text-success mb-0">{{ pedido.total|formato_miles }}</h4>
+                            </div>
+
+                            {% if not pedido.pagado %}
+                            <form method="post" action="{% url 'pagar_pedido' pedido.id %}" class="bg-light p-3 rounded border">
+                                {% csrf_token %}
+                                <label class="form-label fw-bold text-dark">Selecciona tu método de pago:</label>
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-8">
+                                        <select name="metodo_pago" class="form-select form-select-sm" required>
+                                            <option value="">-- Selecciona forma de pago --</option>
+                                            <optgroup label="Pago al Delivery">
+                                                <option value="DELIVERY_EFECTIVO">💵 Efectivo al Delivery</option>
+                                                <option value="DELIVERY_TARJETA">💳 Tarjeta al Delivery</option>
+                                                <option value="DELIVERY_TRANSFERENCIA">📱 Transferencia al Delivery</option>
+                                            </optgroup>
+                                            <optgroup label="Pago en el Local">
+                                                <option value="LOCAL_EFECTIVO">💵 Efectivo en el Local</option>
+                                                <option value="LOCAL_TARJETA">💳 Tarjeta en el Local</option>
+                                                <option value="LOCAL_TRANSFERENCIA">📱 Transferencia en el Local</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Pagar y Desbloquear Boleta</button>
+                                    </div>
+                                </div>
+                            </form>
+                            {% else %}
+                                <div class="alert alert-success py-2 mb-0 small text-center">
+                                    ✅ Pagado mediante: <strong>{{ pedido.get_metodo_pago_display }}</strong>
+                                </div>
+                            {% endif %}
                         </div>
+
                     </div>
                 </div>
             </div>

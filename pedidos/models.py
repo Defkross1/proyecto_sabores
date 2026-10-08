@@ -48,6 +48,14 @@ class Pedidos(models.Model):
         ('13:00 - 14:00', '13:00 a 14:00 Hrs'),
         ('14:00 - 15:00', '14:00 a 15:00 Hrs'),
     ]
+    METODOS_PAGO = [
+        ('DELIVERY_EFECTIVO', 'Efectivo al Delivery'),
+        ('DELIVERY_TARJETA', 'Tarjeta al Delivery'),
+        ('DELIVERY_TRANSFERENCIA', 'Transferencia al Delivery'),
+        ('LOCAL_EFECTIVO', 'Efectivo en el Local'),
+        ('LOCAL_TARJETA', 'Tarjeta en el Local'),
+        ('LOCAL_TRANSFERENCIA', 'Transferencia en el Local'),
+    ]
 
     cliente = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="pedidos")
     direccion = models.ForeignKey(DireccionCliente, on_delete=models.PROTECT, verbose_name="Dirección de Entrega")
@@ -62,6 +70,8 @@ class Pedidos(models.Model):
         related_name="pedidos_asignados"
     )
     fecha_pedido = models.DateTimeField(auto_now_add=True)
+    pagado = models.BooleanField(default=False)
+    metodo_pago = models.CharField(max_length=30, choices=METODOS_PAGO, blank=True, null=True)
 
     def recalculador_total(self):
         subtotales = [item.cantidad * item.precio_unitario for item in self.items.all()]

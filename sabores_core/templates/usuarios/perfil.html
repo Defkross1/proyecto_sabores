@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load formato_moneda %}
 
 {% block content %}
 <div class="row g-4">
@@ -51,6 +52,55 @@
                     {{ form_direccion.as_p }}
                     <button type="submit" class="btn btn-success">Agregar dirección</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- 🌟 HISTORIAL DE COMPRAS Y BOLETAS -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Historial de Compras y Boletas</h5>
+            </div>
+            <div class="card-body">
+                {% if historial_compras %}
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Estado de Pago</th>
+                                    <th>Boleta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for compresa in historial_compras %}
+                                <tr>
+                                    <td>#{{ compresa.id }}</td>
+                                    <td>{{ compresa.fecha_pedido|date:"d/m/Y H:i" }}</td>
+                                    <td class="text-success fw-bold">{{ compresa.total|formato_miles }}</td>
+                                    <td>
+                                        {% if compresa.pagado %}
+                                            <span class="badge bg-success">Pagado ({{ compresa.get_metodo_pago_display }})</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if compresa.pagado %}
+                                            <a href="{% url 'boleta_pedido' compresa.id %}" class="btn btn-sm btn-info text-white">Ver Boleta</a>
+                                        {% else %}
+                                            <span class="text-muted small">Pago requerido</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No tienes compras registradas en tu historial.</p>
+                {% endif %}
             </div>
         </div>
 

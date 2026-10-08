@@ -81,8 +81,6 @@ def carrito_pedido_view(request):
                     comuna="Santiago"
                 )
 
-            # 🌟 BUSCAR O CREAR UN PEDIDO UNIFICADO ACTIVO ('SOLICITADO')
-            # Si el cliente ya tiene un pedido en curso, agregamos el plato ahí en vez de crear otro.
             pedido, created_pedido = Pedido.objects.get_or_create(
                 cliente=request.user,
                 estado='SOLICITADO',
@@ -92,7 +90,6 @@ def carrito_pedido_view(request):
                 }
             )
 
-            # Crear o incrementar el ítem dentro del mismo pedido unificado
             item, created_item = ItemPedido.objects.get_or_create(
                 pedido=pedido,
                 plato=plato_obj,
@@ -150,7 +147,7 @@ def carrito_pedido_view(request):
 def menu_semanal_cliente(request):
     chile_tz = zoneinfo.ZoneInfo('America/Santiago')
     now_chile = datetime.now(chile_tz)
-    dia_actual_idx = now_chile.weekday() # 0: Lunes, 1: Martes, 2: Miércoles, 3: Jueves, 4: Viernes, 5: Sábado, 6: Domingo
+    dia_actual_idx = now_chile.weekday()
     hora_actual = now_chile.hour
 
     dias_semana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']
@@ -163,27 +160,23 @@ def menu_semanal_cliente(request):
             platos = PlatoMenu.objects.filter(activo=True)
         menus_por_dia[dia] = platos
 
-        # Regla de negocio de días habilitados:
-        # - Si el día ya pasó en la semana -> Bloqueado (False)
-        # - Si es Viernes (idx == 4) y hoy es Viernes o Fin de semana -> Permitir Lunes de la próxima semana
-        # - Regla general de un día para otro o el mismo día según hora límite (ej: < 15:00 hrs)
-        if dia_actual_idx == 4: # Si hoy es Viernes
-            if idx == 0: # El Lunes próximo está habilitado
+        if dia_actual_idx == 4:
+            if idx == 0:
                 dias_habilitados[dia] = True
             else:
                 dias_habilitados[dia] = False
-        elif dia_actual_idx >= 5: # Sábado o Domingo
-            if idx == 0: # El Lunes está habilitado para la próxima semana
+        elif dia_actual_idx >= 5:
+            if idx == 0:
                 dias_habilitados[dia] = True
             else:
                 dias_habilitados[dia] = False
         else:
             if idx < dia_actual_idx:
-                dias_habilitados[dia] = False # Días pasados bloqueados
+                dias_habilitados[dia] = False
             elif idx == dia_actual_idx and hora_actual >= 15:
-                dias_habilitados[dia] = False # Hoy pasado de las 15:00 hrs bloqueado
+                dias_habilitados[dia] = False
             else:
-                dias_habilitados[dia] = True # Días futuros o hoy antes de las 15:00 habilitados
+                dias_habilitados[dia] = True
 
     class DiasEstado:
         pass
@@ -233,7 +226,6 @@ def menu_semanal_cliente(request):
                     comuna="Santiago"
                 )
 
-            # Buscar o crear pedido unificado activo
             pedido, created_pedido = Pedido.objects.get_or_create(
                 cliente=request.user,
                 estado='SOLICITADO',
@@ -255,7 +247,6 @@ def menu_semanal_cliente(request):
                             plato = PlatoMenu.objects.get(id=plato_id)
                             acompanamiento = request.POST.get(f'acompanamiento_{dia}_{plato_id}', 'NINGUNO')
                             
-                            # Agregar o actualizar ítem en el pedido unificado
                             item, created_item = ItemPedido.objects.get_or_create(
                                 pedido=pedido,
                                 plato=plato,
@@ -307,24 +298,45 @@ def boleta_pedido(request, pedido_id):
         pedido = get_object_or_404(Pedido, id=pedido_id)
     else:
         pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
+    
+    if not pedido.pagado and request.user.rol not in ['GERENTE', 'ATENCION']:
+        messages.error(request, "Debes pagar el pedido antes de ver la boleta.")
+        return redirect('mis_pedidos')
+
     return render(request, 'pedidos/boleta.html', {'pedido': pedido})
+
+
+@login_required
+def pagar_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
+    if request.method == 'POST':
+        metodo = request.POST.get('metodo_pago')
+        if metodo:
+            pedido.metodo_pago = metodo
+            pedido.pagado = True
+            pedido.estado = 'EN_PREPARACION'
+            pedido.save()
+            messages.success(request, "¡Pago registrado con éxito! Tu boleta ya está disponible.")
+        else:
+            messages.error(request, "Debes seleccionar un método de pago.")
+    return redirect('mis_pedidos')
 
 
 @login_required
 def eliminar_pedido_cliente(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
-    if pedido.estado == 'SOLICITADO':
+    if pedido.estado == 'SOLICITADO' and not pedido.pagado:
         pedido.delete()
         messages.success(request, f"El pedido #{pedido_id} ha sido eliminado con éxito.")
     else:
-        messages.error(request, "No se puede eliminar un pedido que ya está en proceso.")
+        messages.error(request, "No se puede eliminar un pedido que ya está pagado o en proceso.")
     return redirect('mis_pedidos')
 
 
 @login_required
 def editar_pedido_cliente(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
-    if pedido.estado != 'SOLICITADO':
+    if pedido.estado != 'SOLICITADO' or pedido.pagado:
         messages.error(request, "Este pedido ya no se puede editar.")
         return redirect('mis_pedidos')
 
