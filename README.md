@@ -93,42 +93,42 @@ Sigue estos pasos para clonar y poner en marcha el proyecto en tu entorno local:
    cd proyecto_sabores-main
 
 
-Crear y activar el entorno virtual:
+# Crear y activar el entorno virtual:
 
-Bash
-python -m venv venv
-# En Windows (PowerShell):
-.\venv\Scripts\Activate
+En Windows (PowerShell):
 
-# En Mac/Linux:
-source venv/bin/activate
+* python -m venv venv
+* .\venv\Scripts\Activate
 
-
-Instalar las dependencias:
-
-Bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-# O alternativamente:
-python -m pip install django Pillow
-
-Aplicar las migraciones de base de datos:
-
-Bash
-python manage.py makemigrations
-python manage.py migrate
+* En Mac/Linux:
+* python -m venv venv
+* source venv/bin/activate
 
 
-Crear un superusuario (Opcional para administración):
+# Instalar las dependencias:
 
-Bash
-python manage.py createsuperuser
+* python -m pip install --upgrade pip
+* python -m pip install -r requirements.txt
+
+O alternativamente:
+* python -m pip install django Pillow
 
 
-Ejecutar el servidor de desarrollo:
+# Aplicar las migraciones de base de datos:
 
-Bash
-python manage.py runserver
+* python manage.py makemigrations
+* python manage.py migrate
+
+
+# Crear un superusuario (Opcional para administración):
+
+* python manage.py createsuperuser
+
+
+# Ejecutar el servidor de desarrollo:
+
+* python manage.py runserver
+
 Abre tu navegador y accede a http://127.0.0.1:8000/.
 
 👨‍💻 Autor
