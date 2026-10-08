@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow p-4" id="area-impresion">
+        <div class="text-center mb-4">
+            <h2>🍽️ Proyecto Sabores</h2>
+            <p class="text-muted mb-1">Comida Casera y Tradicional</p>
+            <h5>Boleta de Pedido #{{ pedido.id }}</h5>
+        </div>
+        
+        <hr>
+        
+        <div class="row mb-3">
+            <div class="col-sm-6">
+                <p><strong>Cliente:</strong> {{ pedido.cliente.nombre }} {{ pedido.cliente.apellido|default:"" }}</p>
+                <p><strong>Correo:</strong> {{ pedido.cliente.email }}</p>
+                <p><strong>Teléfono:</strong> {{ pedido.cliente.telefono }}</p>
+            </div>
+            <div class="col-sm-6 text-sm-end">
+                <p><strong>Fecha:</strong> {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
+                <p><strong>Horario de Entrega:</strong> {{ pedido.horario_entrega }}</p>
+                <p><strong>Estado:</strong> <span class="badge bg-secondary">{{ pedido.get_estado_display }}</span></p>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <p><strong>Dirección de Entrega:</strong> {{ pedido.direccion }}</p>
+        </div>
+
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Plato</th>
+                    <th>Acompañamiento</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-end">P. Unitario</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pedido.items.all %}
+                <tr>
+                    <td>{{ item.plato.nombre }}</td>
+                    <td>{{ item.get_acompanamiento_display }}</td>
+                    <td class="text-center">{{ item.cantidad }}</td>
+                    <td class="text-end">${{ item.precio_unitario|floatformat:0 }}</td>
+                    <td class="text-end">${{ item.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-end"><strong>Total a Pagar:</strong></td>
+                    <td class="text-end"><strong>${{ pedido.total|floatformat:0 }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="text-center mt-4 no-print">
+            <button onclick="window.print();" class="btn btn-primary btn-lg">
+                <i class="fas fa-print"></i> Imprimir Boleta
+            </button>
+            <a href="{% url 'mis_pedidos' %}" class="btn btn-secondary btn-lg ms-2">Volver a Mis Pedidos</a>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #area-impresion, #area-impresion * {
+        visibility: visible;
+    }
+    #area-impresion {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

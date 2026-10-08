@@ -74,11 +74,11 @@ def carrito_pedido_view(request):
             elif DireccionCliente.objects.filter(cliente=request.user).exists():
                 direccion_bd = DireccionCliente.objects.filter(cliente=request.user).first()
             else:
-                dir_texto = f"{request.user.empresa_convenio.nombre} - {request.user.empresa_convenio.direccion}" if hasattr(request.user, 'empresa_convenio') and request.user.empresa_convenio else "Dirección Principal"
+                dir_texto = f"{request.user.empresa_convenio.nombre}\n{request.user.empresa_convenio.direccion}" if hasattr(request.user, 'empresa_convenio') and request.user.empresa_convenio else "Dirección Principal"
                 direccion_bd = DireccionCliente.objects.create(
                     cliente=request.user,
-                    direccion=dir_texto,
-                    ciudad="Santiago"
+                    calle_y_numero=dir_texto,
+                    comuna="Santiago"
                 )
 
             pedido = Pedido.objects.create(
@@ -120,7 +120,6 @@ def carrito_pedido_view(request):
             user_auth = authenticate(request, username=usuario.email, password=clave)
             
             if user_auth is not None:
-                # Seguridad: Rotación de ID de sesión para prevenir ataques de fijación de sesión
                 request.session.cycle_key()
                 login(request, user_auth)
                 messages.success(request, f"¡Bienvenido, {usuario.nombre}! Autenticado de forma segura por convenio.")
@@ -192,8 +191,8 @@ def menu_semanal_cliente(request):
                 direccion_bd, _ = DireccionCliente.objects.get_or_create(
                     cliente=request.user,
                     defaults={
-                        'direccion': f"{emp.nombre} - {emp.direccion}",
-                        'ciudad': "Santiago"
+                        'calle_y_numero': f"{emp.nombre}\n{emp.direccion}",
+                        'comuna': "Santiago"
                     }
                 )
             else:
@@ -204,8 +203,8 @@ def menu_semanal_cliente(request):
             if not direccion_bd:
                 direccion_bd = DireccionCliente.objects.create(
                     cliente=request.user,
-                    direccion="Dirección Principal",
-                    ciudad="Santiago"
+                    calle_y_numero="Dirección Principal",
+                    comuna="Santiago"
                 )
 
             pedido = Pedido.objects.create(
@@ -261,14 +260,21 @@ def menu_semanal_cliente(request):
 
 @login_required
 def mis_pedidos(request):
-    # Seguridad: Filtrar estrictamente por el usuario autenticado para evitar exposición de datos (IDOR)
     pedidos = request.user.pedidos.all().order_by('-fecha_pedido')
     return render(request, 'pedidos/mis_pedidos.html', {'pedidos': pedidos})
 
 
 @login_required
+def boleta_pedido(request, pedido_id):
+    if request.user.rol in ['GERENTE', 'ATENCION']:
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+    else:
+        pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
+    return render(request, 'pedidos/boleta.html', {'pedido': pedido})
+
+
+@login_required
 def eliminar_pedido_cliente(request, pedido_id):
-    # Seguridad: Validar propiedad estricta del recurso
     pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
     if pedido.estado == 'SOLICITADO':
         pedido.delete()
@@ -280,7 +286,6 @@ def eliminar_pedido_cliente(request, pedido_id):
 
 @login_required
 def editar_pedido_cliente(request, pedido_id):
-    # Seguridad: Validar propiedad estricta del recurso
     pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
     if pedido.estado != 'SOLICITADO':
         messages.error(request, "Este pedido ya no se puede editar.")
@@ -365,6 +370,7 @@ def gerente_dashboard(request):
     proveedores = Proveedor.objects.all()
     empleados = Usuario.objects.filter(rol__in=['GERENTE', 'ATENCION', 'REPARTIDOR'])
     convenios = EmpresaConvenio.objects.all()
+    pedidos_recientes = Pedido.objects.all().order_by('-fecha_pedido')
 
     if request.method == 'POST':
         accion = request.POST.get('accion')
@@ -436,6 +442,7 @@ def gerente_dashboard(request):
         'proveedores': proveedores,
         'empleados': empleados,
         'convenios': convenios,
+        'pedidos_recientes': pedidos_recientes,
         'dias': PlatoMenu.DIAS
     })
 

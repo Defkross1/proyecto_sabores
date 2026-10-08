@@ -3,17 +3,28 @@
 
 {% block content %}
 <div class="container my-4">
-    <h2 class="fw-bold mb-4">Mis Pedidos Realizados</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Mis Pedidos Realizados</h2>
+        <a href="{% url 'menu_semanal' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Hacer Nuevo Pedido
+        </a>
+    </div>
 
     {% if pedidos %}
         <div class="row g-4">
             {% for pedido in pedidos %}
             <div class="col-md-12">
                 <div class="card shadow-sm border-0">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <span><strong>Pedido #{{ pedido.id }}</strong> - Fecha: {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</span>
-                        <div>
-                            <span class="badge bg-warning text-dark me-2">{{ pedido.get_estado_display|default:pedido.estado }}</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-warning text-dark">{{ pedido.get_estado_display|default:pedido.estado }}</span>
+                            
+                            <!-- Botón para Ver / Imprimir Boleta -->
+                            <a href="{% url 'boleta_pedido' pedido.id %}" class="btn btn-info btn-sm text-white">
+                                <i class="fas fa-receipt"></i> Ver Boleta
+                            </a>
+
                             {% if pedido.estado == 'SOLICITADO' %}
                                 <a href="{% url 'editar_pedido' pedido.id %}" class="btn btn-outline-light btn-sm">Editar</a>
                                 <a href="{% url 'eliminar_pedido' pedido.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este pedido?');">Eliminar</a>
@@ -39,7 +50,6 @@
                                         </span>
                                     </small>
                                 </div>
-                                <!-- Quitamos el $ manual por si tu filtro ya lo incluye -->
                                 <span class="text-success fw-bold fs-5">{{ item.precio_unitario|formato_miles }}</span>
                             </li>
                             {% empty %}
@@ -50,7 +60,6 @@
                         <!-- TOTAL A PAGAR -->
                         <div class="d-flex justify-content-between align-items-center border-top pt-3">
                             <h5 class="fw-bold mb-0">Total a Pagar:</h5>
-                            <!-- Quitamos el $ manual por si tu filtro ya lo incluye -->
                             <h4 class="fw-bold text-success mb-0">{{ pedido.total|formato_miles }}</h4>
                         </div>
                     </div>
