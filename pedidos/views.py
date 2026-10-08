@@ -81,23 +81,34 @@ def carrito_pedido_view(request):
                     comuna="Santiago"
                 )
 
-            pedido = Pedido.objects.create(
+            # 🌟 BUSCAR O CREAR UN PEDIDO UNIFICADO ACTIVO ('SOLICITADO')
+            # Si el cliente ya tiene un pedido en curso, agregamos el plato ahí en vez de crear otro.
+            pedido, created_pedido = Pedido.objects.get_or_create(
                 cliente=request.user,
-                direccion=direccion_bd,
-                horario_entrega="12:00 - 13:00",
-                estado='SOLICITADO'
+                estado='SOLICITADO',
+                defaults={
+                    'direccion': direccion_bd,
+                    'horario_entrega': "12:00 - 13:00"
+                }
             )
 
-            ItemPedido.objects.create(
+            # Crear o incrementar el ítem dentro del mismo pedido unificado
+            item, created_item = ItemPedido.objects.get_or_create(
                 pedido=pedido,
                 plato=plato_obj,
-                cantidad=1,
-                precio_unitario=plato_obj.precio,
-                acompanamiento='NINGUNO'
+                defaults={
+                    'cantidad': 1,
+                    'precio_unitario': plato_obj.precio,
+                    'acompanamiento': 'NINGUNO'
+                }
             )
+            
+            if not created_item:
+                item.cantidad += 1
+                item.save()
 
             pedido.recalcular_total()
-            messages.success(request, f"¡Has seleccionado '{plato_obj.nombre}'! Se ha registrado en tus pedidos.")
+            messages.success(request, f"¡'{plato_obj.nombre}' se ha sumado a tu pedido unificado!")
             return redirect('mis_pedidos')
         except Exception as e:
             messages.error(request, f"Error de seguridad al procesar el plato: {e}")
