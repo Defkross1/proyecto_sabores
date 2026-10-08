@@ -150,7 +150,7 @@ def carrito_pedido_view(request):
 def menu_semanal_cliente(request):
     chile_tz = zoneinfo.ZoneInfo('America/Santiago')
     now_chile = datetime.now(chile_tz)
-    dia_actual_idx = now_chile.weekday() 
+    dia_actual_idx = now_chile.weekday() # 0: Lunes, 1: Martes, 2: Miércoles, 3: Jueves, 4: Viernes, 5: Sábado, 6: Domingo
     hora_actual = now_chile.hour
 
     dias_semana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']
@@ -163,12 +163,27 @@ def menu_semanal_cliente(request):
             platos = PlatoMenu.objects.filter(activo=True)
         menus_por_dia[dia] = platos
 
-        if idx < dia_actual_idx:
-            dias_habilitados[dia] = False
-        elif idx == dia_actual_idx and hora_actual >= 15:
-            dias_habilitados[dia] = False
+        # Regla de negocio de días habilitados:
+        # - Si el día ya pasó en la semana -> Bloqueado (False)
+        # - Si es Viernes (idx == 4) y hoy es Viernes o Fin de semana -> Permitir Lunes de la próxima semana
+        # - Regla general de un día para otro o el mismo día según hora límite (ej: < 15:00 hrs)
+        if dia_actual_idx == 4: # Si hoy es Viernes
+            if idx == 0: # El Lunes próximo está habilitado
+                dias_habilitados[dia] = True
+            else:
+                dias_habilitados[dia] = False
+        elif dia_actual_idx >= 5: # Sábado o Domingo
+            if idx == 0: # El Lunes está habilitado para la próxima semana
+                dias_habilitados[dia] = True
+            else:
+                dias_habilitados[dia] = False
         else:
-            dias_habilitados[dia] = True
+            if idx < dia_actual_idx:
+                dias_habilitados[dia] = False # Días pasados bloqueados
+            elif idx == dia_actual_idx and hora_actual >= 15:
+                dias_habilitados[dia] = False # Hoy pasado de las 15:00 hrs bloqueado
+            else:
+                dias_habilitados[dia] = True # Días futuros o hoy antes de las 15:00 habilitados
 
     class DiasEstado:
         pass
@@ -218,12 +233,14 @@ def menu_semanal_cliente(request):
                     comuna="Santiago"
                 )
 
-            # 🌟 Creamos UN SOLO PEDIDO unificado para todos los platos seleccionados en la semana
-            pedido = Pedido.objects.create(
+            # Buscar o crear pedido unificado activo
+            pedido, created_pedido = Pedido.objects.get_or_create(
                 cliente=request.user,
-                direccion=direccion_bd,
-                horario_entrega=horario,
-                estado='SOLICITADO'
+                estado='SOLICITADO',
+                defaults={
+                    'direccion': direccion_bd,
+                    'horario_entrega': horario
+                }
             )
 
             seleccion_realizada = False
@@ -237,24 +254,32 @@ def menu_semanal_cliente(request):
                         try:
                             plato = PlatoMenu.objects.get(id=plato_id)
                             acompanamiento = request.POST.get(f'acompanamiento_{dia}_{plato_id}', 'NINGUNO')
-                            ItemPedido.objects.create(
+                            
+                            # Agregar o actualizar ítem en el pedido unificado
+                            item, created_item = ItemPedido.objects.get_or_create(
                                 pedido=pedido,
                                 plato=plato,
-                                cantidad=1,
-                                precio_unitario=plato.precio,
-                                acompanamiento=acompanamiento
+                                defaults={
+                                    'cantidad': 1,
+                                    'precio_unitario': plato.precio,
+                                    'acompanamiento': acompanamiento
+                                }
                             )
+                            if not created_item:
+                                item.cantidad += 1
+                                item.acompanamiento = acompanamiento
+                                item.save()
+
                             seleccion_realizada = True
                         except PlatoMenu.DoesNotExist:
                             pass
 
             if not seleccion_realizada:
-                pedido.delete()
                 messages.error(request, "Debes seleccionar al menos un plato válido en los días habilitados.")
                 return redirect('menu_semanal')
 
             pedido.recalcular_total()
-            messages.success(request, f"¡Pedido unificado #{pedido.id} realizado con éxito!")
+            messages.success(request, f"¡Pedido unificado #{pedido.id} actualizado con éxito!")
             return redirect('mis_pedidos')
 
         except Exception as e:
