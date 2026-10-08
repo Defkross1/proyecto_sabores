@@ -33,7 +33,15 @@
                     </div>
                     <div class="card-body">
                         <p class="mb-2"><strong>Horario de Entrega:</strong> {{ pedido.horario_entrega }}</p>
-                        <p class="mb-3"><strong>Dirección:</strong> {{ pedido.direccion.direccion|default:"Dirección corporativa" }}</p>
+                        <p class="mb-3"><strong>Dirección:</strong> 
+                            {% if pedido.direccion.calle_y_numero %}
+                                {{ pedido.direccion.calle_y_numero }}{% if pedido.direccion.departamento_oficina %}, Depto/Of: {{ pedido.direccion.departamento_oficina }}{% endif %}, {{ pedido.direccion.comuna }}
+                            {% elif pedido.direccion.direccion %}
+                                {{ pedido.direccion.direccion }}
+                            {% else %}
+                                Dirección corporativa
+                            {% endif %}
+                        </p>
                         
                         <h6 class="fw-bold text-muted">Platos solicitados y acompañamientos:</h6>
                         <ul class="list-group mb-3">
