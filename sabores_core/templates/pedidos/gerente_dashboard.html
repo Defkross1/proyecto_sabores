@@ -1,221 +1,183 @@
 {% extends 'base.html' %}
+{% load formato_moneda %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Panel del Gerente</h3>
-</div>
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Panel de Administración General (Gerencia)</h2>
+    </div>
 
-<div class="row g-4">
-    <!-- Menú Semanal -->
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">Menú semanal</h5>
+    <!-- DASHBOARD DE MÉTRICAS Y GANANCIAS DEL DÍA -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-success text-white p-3">
+                <h5>Ganancias del Día (Pagadas)</h5>
+                <h3 class="fw-bold mb-0">{{ ganancias_dia|formato_miles }}</h3>
             </div>
-            <div class="card-body">
-                {% if menus %}
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Día</th>
-                                    <th>Precio</th>
-                                    <th>Proveedor</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for menu in menus %}
-                                <tr>
-                                    <td>{{ menu.nombre }}</td>
-                                    <td>{{ menu.get_dia_semana_display }}</td>
-                                    <td>${{ menu.precio }}</td>
-                                    <td>{{ menu.proveedor.nombre|default:'Sin proveedor' }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p class="text-muted mb-0">No hay platos registrados.</p>
-                {% endif %}
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-primary text-white p-3">
+                <h5>Total Pedidos Registrados</h5>
+                <h3 class="fw-bold mb-0">{{ pedidos_todos.count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-dark text-white p-3">
+                <h5>Clientes Registrados</h5>
+                <h3 class="fw-bold mb-0">{{ clientes_comunes.count|add:clientes_empresas.count }}</h3>
             </div>
         </div>
     </div>
 
-    <!-- Proveedores -->
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">Proveedores</h5>
+    <!-- GESTIÓN DE MENÚS (CREAR Y EDITAR) -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Gestión de Menú Semanal (Visible en Portada)</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-3 mb-4 border-bottom pb-4">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="crear_menu">
+                <h6 class="fw-bold text-primary">Agregar Nuevo Plato al Menú</h6>
+                <div class="col-md-3">
+                    <input type="text" name="nombre" class="form-control" placeholder="Nombre del plato" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="descripcion" class="form-control" placeholder="Descripción breve" required>
+                </div>
+                <div class="col-md-2">
+                    <select name="dia_semana" class="form-select" required>
+                        {% for val, label in dias %}
+                            <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="precio" class="form-control" placeholder="Precio ($)" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100 fw-bold">Crear Plato</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Día</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for menu in menus %}
+                        <tr>
+                            <td class="fw-bold">{{ menu.nombre }}</td>
+                            <td>{{ menu.get_dia_semana_display }}</td>
+                            <td class="text-success">{{ menu.precio|formato_miles }}</td>
+                            <td>
+                                <a href="{% url 'editar_menu_gerente' menu.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a href="{% url 'eliminar_elemento' 'menu' menu.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este plato?');">Eliminar</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-muted text-center">No hay platos en el menú.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div class="card-body">
-                {% if proveedores %}
-                    <ul class="list-group list-group-flush">
-                        {% for proveedor in proveedores %}
-                        <li class="list-group-item">
-                            <strong>{{ proveedor.nombre }}</strong><br>
-                            <small>{{ proveedor.contacto }} · {{ proveedor.telefono }}</small>
+        </div>
+    </div>
+
+    <!-- SEGUIMIENTO DE CONSUMOS Y DELIVERY -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Consumos de Clientes y Estado de Delivery</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Platos Consumidos</th>
+                            <th>Estado / Delivery</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ped in pedidos_todos %}
+                        <tr>
+                            <td>#{{ ped.id }}</td>
+                            <td>{{ ped.cliente.nombre }} {{ ped.cliente.apellido }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in ped.items.all %}
+                                        <li>• {{ item.plato.nombre }} ({{ item.get_acompanamiento_display }}) x{{ item.cantidad }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ ped.get_estado_display }}</span>
+                                {% if ped.repartidor %}
+                                    <br><small class="text-muted">Repartidor: {{ ped.repartidor.nombre }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-success fw-bold">{{ ped.total|formato_miles }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-muted text-center">No hay pedidos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTADO DE CLIENTES (COMUNES Y EMPRESAS) -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Clientes Comunes Registrados</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for cli in clientes_comunes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><strong>{{ cli.nombre }} {{ cli.apellido }}</strong><br><small class="text-muted">{{ cli.email }}</small></span>
+                            <span class="badge bg-secondary">Común</span>
                         </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">No hay clientes comunes registrados.</li>
                         {% endfor %}
                     </ul>
-                {% else %}
-                    <p class="text-muted mb-0">No hay proveedores registrados.</p>
-                {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Empleados del Sistema -->
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">Empleados del Sistema</h5>
-            </div>
-            <div class="card-body">
-                {% if empleados %}
-                    <ul class="list-group list-group-flush">
-                        {% for empleado in empleados %}
-                        <li class="list-group-item">
-                            <strong>{{ empleado.nombre }} {{ empleado.apellido|default:'' }}</strong><br>
-                            <small>{{ empleado.get_rol_display }} · {{ empleado.email }}</small>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Clientes de Empresas en Convenio</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for cli in clientes_empresas %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><strong>{{ cli.nombre }} {{ cli.apellido }}</strong><br><small class="text-muted">{{ cli.email }} | Empresa: {{ cli.empresa_convenio.nombre }}</small></span>
+                            <span class="badge bg-success">Convenio</span>
                         </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">No hay clientes de empresas registrados.</li>
                         {% endfor %}
                     </ul>
-                {% else %}
-                    <p class="text-muted mb-0">No hay empleados registrados.</p>
-                {% endif %}
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- EMPRESAS EN CONVENIO, TRABAJADORES E HISTORIAL -->
-    <div class="col-lg-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Empresas en Convenio, Trabajadores e Historial</h5>
-            </div>
-            <div class="card-body">
-                
-                {% if convenios %}
-                    <div class="accordion" id="accordionConvenios">
-                        {% for convenio in convenios %}
-                        <div class="accordion-item mb-3 border">
-                            <h2 class="accordion-header" id="headingEmpresa{{ convenio.id }}">
-                                <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmpresa{{ convenio.id }}" aria-expanded="false" aria-controls="collapseEmpresa{{ convenio.id }}">
-                                    <div>
-                                        <strong>{{ convenio.nombre }}</strong> 
-                                        <span class="text-muted small ms-2">(RUT: {{ convenio.rut }} | Tel: {{ convenio.telefono }})</span>
-                                        <div class="small text-muted mt-1">📍 {{ convenio.direccion }}</div>
-                                    </div>
-                                </button>
-                            </h2>
-                            <div id="collapseEmpresa{{ convenio.id }}" class="accordion-collapse collapse" aria-labelledby="headingEmpresa{{ convenio.id }}" data-bs-parent="#accordionConvenios">
-                                <div class="accordion-body bg-white">
-                                    
-                                    <h6 class="fw-bold text-dark mb-3">Trabajadores de esta Empresa:</h6>
-                                    
-                                    <!-- CORREGIDO AQUí: Se usa usuario_set en lugar de trabajadores -->
-                                    {% if convenio.usuario_set.all %}
-                                        <div class="list-group mb-4">
-                                            {% for trabajador in convenio.usuario_set.all %}
-                                            <div class="list-group-item border mb-2 rounded">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <h6 class="mb-1 fw-bold">{{ trabajador.nombre }} {{ trabajador.apellido }}</h6>
-                                                        <small class="text-muted">RUT: {{ trabajador.rut }} | Email: {{ trabajador.email }} | Tel: {{ trabajador.telefono }}</small>
-                                                    </div>
-                                                    <!-- Botón para ver Historial de Compras -->
-                                                    <button class="btn btn-sm btn-outline-dark" type="button" data-bs-toggle="collapse" data-bs-target="#historialTrabajador{{ trabajador.id }}">
-                                                        📦 Ver Historial ({{ trabajador.pedidos.count }})
-                                                    </button>
-                                                </div>
-
-                                                <!-- Historial de compras colapsable por trabajador -->
-                                                <div class="collapse mt-3" id="historialTrabajador{{ trabajador.id }}">
-                                                    <div class="card card-body bg-light border-0">
-                                                        <h6 class="fw-bold text-success mb-2">Platos y Pedidos Comprados:</h6>
-                                                        {% if trabajador.pedidos.all %}
-                                                            <ul class="list-group">
-                                                                {% for pedido in trabajador.pedidos.all %}
-                                                                <li class="list-group-item bg-white small mb-2 border-start border-4 border-success">
-                                                                    <div class="d-flex justify-content-between">
-                                                                        <strong>Pedido #{{ pedido.id }}</strong>
-                                                                        <span class="badge bg-secondary">{{ pedido.get_estado_display }}</span>
-                                                                    </div>
-                                                                    <div>Fecha: {{ pedido.fecha_pedido|date:"d/m/Y H:i" }} | Horario: {{ pedido.horario_entrega }}</div>
-                                                                    <div class="mt-1">
-                                                                        <strong>Platos:</strong>
-                                                                        <ul class="mb-0 ps-3">
-                                                                            {% for item in pedido.items.all %}
-                                                                            <li>{{ item.plato.nombre }} - ${{ item.precio_unitario }} (Cant: {{ item.cantidad }})</li>
-                                                                            {% empty %}
-                                                                            <li>Sin detalles de platos.</li>
-                                                                            {% endfor %}
-                                                                        </ul>
-                                                                    </div>
-                                                                    <div class="text-end fw-bold text-success mt-1">Total: ${{ pedido.total }}</div>
-                                                                </li>
-                                                                {% endfor %}
-                                                            </ul>
-                                                        {% else %}
-                                                            <p class="text-muted small mb-0">Este trabajador aún no ha registrado pedidos.</p>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        <p class="text-muted small">No hay trabajadores registrados en esta empresa.</p>
-                                    {% endif %}
-
-                                    <!-- Formulario para agregar trabajador a esta empresa específica -->
-                                    <div class="card border-0 bg-light p-3 mt-3">
-                                        <h6 class="fw-bold text-primary mb-2">+ Agregar Trabajador a {{ convenio.nombre }}</h6>
-                                        <form method="POST">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="accion" value="crear_trabajador_convenio">
-                                            <input type="hidden" name="empresa_id" value="{{ convenio.id }}">
-                                            
-                                            <div class="row g-2">
-                                                <div class="col-md-3">
-                                                    <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre" required>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="text" name="apellido" class="form-control form-control-sm" placeholder="Apellido" required>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="text" name="rut" class="form-control form-control-sm" placeholder="RUT (Ej: 12345678-9)" required>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="email" name="email" class="form-control form-control-sm" placeholder="Correo electrónico" required>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="text" name="telefono" class="form-control form-control-sm" placeholder="Teléfono">
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="password" name="password" class="form-control form-control-sm" placeholder="Contraseña inicial" required>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <button type="submit" class="btn btn-primary btn-sm w-100">Guardar Trabajador</button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted mb-0">No hay convenios registrados.</p>
-                {% endif %}
-
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}

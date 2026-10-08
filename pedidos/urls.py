@@ -13,5 +13,6 @@ urlpatterns = [
     path('atencion/', views.atencion_dashboard, name='atencion_dashboard'),
     path('repartidor/', views.repartidor_dashboard, name='repartidor_dashboard'),
     path('gerente/', views.gerente_dashboard, name='gerente_dashboard'),
+    path('gerente/menu/editar/<int:plato_id>/', views.editar_menu_gerente, name='editar_menu_gerente'),
     path('gerente/eliminar/<str:tipo>/<int:item_id>/', views.eliminar_elemento, name='eliminar_elemento'),
 ]

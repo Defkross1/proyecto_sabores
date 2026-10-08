@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0 p-4">
+                <h3 class="fw-bold mb-3 text-center">Editar Plato del Menú</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre del Plato:</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ plato.nombre }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descripción:</label>
+                        <textarea name="descripcion" class="form-control" rows="3" required>{{ plato.descripcion }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Día Asignado:</label>
+                        <select name="dia_semana" class="form-select" required>
+                            {% for val, label in dias %}
+                                <option value="{{ val }}" {% if plato.dia_semana == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Precio ($):</label>
+                        <input type="number" name="precio" class="form-control" value="{{ plato.precio }}" required>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'gerente_dashboard' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

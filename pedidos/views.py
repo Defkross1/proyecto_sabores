@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Sum, Q
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.utils.timezone import localtime
 from datetime import datetime
 import zoneinfo
 from .models import PlatoMenu, Proveedor, Pedido, ItemPedido
@@ -14,16 +16,9 @@ from usuarios.decorators import rol_requerido
 # ==================== VISTA PORTADA E INICIO ====================
 @require_http_methods(["GET"])
 def portada_view(request):
-    platos_destacados = [
-        {'nombre': 'Cazuela', 'descripcion': 'Tradicional cazuela casera con presa de carne o pollo, choclo, zapallo y papas.', 'precio': '6.500', 'imagen': 'images/platos/cazuela.jpg'},
-        {'nombre': 'Pollo Arvejado', 'descripcion': 'Jugoso pollo en salsa arvejada acompañado de arroz graneado.', 'precio': '6.000', 'imagen': 'images/platos/pollo_arvejado.jpg'},
-        {'nombre': 'Pollo con Ensalada', 'descripcion': 'Pechuga de pollo a la plancha jugosa acompañada de ensalada fresca del día.', 'precio': '5.800', 'imagen': 'images/platos/pollo_con_ensalada.jpg'},
-        {'nombre': 'Pescado Frito con Puré', 'descripcion': 'Filete de pescado frito dorado y crujiente con suave puré de papas casero.', 'precio': '7.500', 'imagen': 'images/platos/Pescado_Frito_con_Pure.jpg'},
-        {'nombre': 'Porotos con Rienda', 'descripcion': 'Deliciosos porotos tradicionales con fideos y zapallo al estilo casero.', 'precio': '5.500', 'imagen': 'images/platos/Porotos_con_rienda.jpg'},
-        {'nombre': 'Bistec a lo Pobre', 'descripcion': 'Abundante bistec de vacuno con papas fritas crujientes, cebolla caramelizada y huevo frito.', 'precio': '9.500', 'imagen': 'images/platos/Bistec_a_lo_Pobre.jpg'},
-        {'nombre': 'Ensalada César', 'descripcion': 'Lechuga romana crujiente, crutones dorados, queso parmesano, pollo a la plancha y aderezo césar.', 'precio': '5.000', 'imagen': 'images/platos/Ensalada_Cesar.jpg'},
-    ]
-
+    # Obtenemos los platos activos creados en la base de datos para mostrarlos en la portada
+    platos_db = PlatoMenu.objects.filter(activo=True)
+    
     chefs = [
         {'nombre': 'Geovanni Huerta', 'especialidad': 'Comida Tradicional Chilena', 'imagen': 'images/chefs/geovanni_huerta.jpg'},
         {'nombre': 'Jeanliette muñoz', 'especialidad': 'Masas y Repostería Casera', 'imagen': 'images/chefs/Jeanliette_muñoz.jpg'},
@@ -31,7 +26,7 @@ def portada_view(request):
         {'nombre': 'Andres Molina', 'especialidad': 'Ensaladas y Comida Saludable', 'imagen': 'images/chefs/andres_molina.jpg'},
     ]
 
-    return render(request, 'pedidos/portada.html', {'platos': platos_destacados, 'chefs': chefs})
+    return render(request, 'pedidos/portada.html', {'platos': platos_db, 'chefs': chefs})
 
 
 # ==================== VISTA CARRITO / PEDIDO DESDE PORTADA ====================
@@ -415,11 +410,22 @@ def repartidor_dashboard(request):
 
 @rol_requerido(['GERENTE'])
 def gerente_dashboard(request):
+    chile_tz = zoneinfo.ZoneInfo('America/Santiago')
+    hoy_chile = datetime.now(chile_tz).date()
+
     menus = PlatoMenu.objects.all().order_by('dia_semana')
     proveedores = Proveedor.objects.all()
     empleados = Usuario.objects.filter(rol__in=['GERENTE', 'ATENCION', 'REPARTIDOR'])
     convenios = EmpresaConvenio.objects.all()
-    pedidos_recientes = Pedido.objects.all().order_by('-fecha_pedido')
+    
+    pedidos_todos = Pedido.objects.all().order_by('-fecha_pedido')
+    clientes_comunes = Usuario.objects.filter(rol='CLIENTE', empresa_convenio__isnull=True)
+    clientes_empresas = Usuario.objects.filter(rol='CLIENTE', empresa_convenio__isnull=False)
+
+    ganancias_dia = sum(
+        p.total for p in pedidos_todos 
+        if p.pagado and localtime(p.fecha_pedido).date() == hoy_chile
+    )
 
     if request.method == 'POST':
         accion = request.POST.get('accion')
@@ -429,9 +435,10 @@ def gerente_dashboard(request):
                 nombre=request.POST.get('nombre'),
                 descripcion=request.POST.get('descripcion'),
                 dia_semana=request.POST.get('dia_semana'),
-                precio=request.POST.get('precio')
+                precio=request.POST.get('precio'),
+                activo=True
             )
-            messages.success(request, "Plato incorporado al menú semanal.")
+            messages.success(request, "Plato incorporado al menú y visible en portada.")
 
         elif accion == 'crear_proveedor':
             Proveedor.objects.create(
@@ -440,20 +447,6 @@ def gerente_dashboard(request):
                 telefono=request.POST.get('telefono')
             )
             messages.success(request, "Proveedor ingresado.")
-
-        elif accion == 'crear_empleado':
-            nuevo_emp = Usuario.objects.create_user(
-                email=request.POST.get('email'),
-                nombre=request.POST.get('nombre'),
-                apellido=request.POST.get('apellido'),
-                rut=request.POST.get('rut'),
-                telefono=request.POST.get('telefono'),
-                direccion=request.POST.get('direccion'),
-                cargo=request.POST.get('cargo'),
-                rol=request.POST.get('rol'),
-                password=request.POST.get('password')
-            )
-            messages.success(request, f"Empleado {nuevo_emp.nombre} registrado con éxito.")
 
         elif accion == 'crear_convenio':
             EmpresaConvenio.objects.create(
@@ -464,26 +457,6 @@ def gerente_dashboard(request):
             )
             messages.success(request, "Empresa en convenio agregada.")
 
-        elif accion == 'crear_trabajador_convenio':
-            empresa_id = request.POST.get('empresa_id')
-            empresa_obj = get_object_or_404(EmpresaConvenio, id=empresa_id)
-            try:
-                nuevo_trabajador = Usuario.objects.create_user(
-                    email=request.POST.get('email'),
-                    nombre=request.POST.get('nombre'),
-                    apellido=request.POST.get('apellido'),
-                    rut=request.POST.get('rut'),
-                    telefono=request.POST.get('telefono', ''),
-                    direccion=empresa_obj.direccion,
-                    cargo="Trabajador Convenio",
-                    rol="CLIENTE",
-                    empresa_convenio=empresa_obj,
-                    password=request.POST.get('password')
-                )
-                messages.success(request, f"Trabajador {nuevo_trabajador.nombre} agregado a {empresa_obj.nombre}.")
-            except Exception as e:
-                messages.error(request, f"Error al registrar trabajador: {e}")
-
         return redirect('gerente_dashboard')
 
     return render(request, 'pedidos/gerente_dashboard.html', {
@@ -491,9 +464,26 @@ def gerente_dashboard(request):
         'proveedores': proveedores,
         'empleados': empleados,
         'convenios': convenios,
-        'pedidos_recientes': pedidos_recientes,
+        'pedidos_todos': pedidos_todos,
+        'clientes_comunes': clientes_comunes,
+        'clientes_empresas': clientes_empresas,
+        'ganancias_dia': ganancias_dia,
         'dias': PlatoMenu.DIAS
     })
+
+
+@rol_requerido(['GERENTE'])
+def editar_menu_gerente(request, plato_id):
+    plato = get_object_or_404(PlatoMenu, id=plato_id)
+    if request.method == 'POST':
+        plato.nombre = request.POST.get('nombre')
+        plato.descripcion = request.POST.get('descripcion')
+        plato.dia_semana = request.POST.get('dia_semana')
+        plato.precio = request.POST.get('precio')
+        plato.save()
+        messages.success(request, "Plato actualizado con éxito.")
+        return redirect('gerente_dashboard')
+    return render(request, 'pedidos/editar_menu.html', {'plato': plato, 'dias': PlatoMenu.DIAS})
 
 
 @rol_requerido(['GERENTE'])
