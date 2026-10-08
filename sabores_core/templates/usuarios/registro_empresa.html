@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow border-0 p-4">
+                <h3 class="fw-bold mb-3 text-center">Registro Cliente Empresa (Convenio)</h3>
+                <p class="text-muted text-center mb-4">Ingresa el RUT de tu empresa y la clave institucional para validar tu convenio.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Selecciona tu Empresa:</label>
+                        {{ form.empresa_convenio }}
+                        {% if form.empresa_convenio.errors %}<div class="text-danger small">{{ form.empresa_convenio.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">RUT de la Empresa:</label>
+                            {{ form.rut_empresa }}
+                            {% if form.rut_empresa.errors %}<div class="text-danger small">{{ form.rut_empresa.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Clave de Convenio:</label>
+                            {{ form.clave_empresa }}
+                            <div class="form-text text-muted">Usa la clave institucional (ej: empresa123).</div>
+                            {% if form.clave_empresa.errors %}<div class="text-danger small">{{ form.clave_empresa.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="fw-bold mb-3">Tus Datos Personales</h5>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre:</label>
+                            {{ form.nombre }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Apellido:</label>
+                            {{ form.apellido }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Correo Electrónico:</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tu RUT Personal:</label>
+                            {{ form.rut }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono:</label>
+                        {{ form.telefono }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contraseña Personal:</label>
+                            {{ form.password }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Confirmar Contraseña:</label>
+                            {{ form.confirmar_password }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'tipo_registro' %}" class="btn btn-secondary">Volver</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">Completar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

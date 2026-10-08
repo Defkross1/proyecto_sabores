@@ -78,7 +78,7 @@ class RegistroEmpresaConvenioForm(forms.ModelForm):
     )
     clave_empresa = forms.CharField(
         label="Clave de Convenio de la Empresa",
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Clave secreta corporativa'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'empresa123'})
     )
     password = forms.CharField(
         label="Tu Contraseña Personal",
@@ -105,11 +105,16 @@ class RegistroEmpresaConvenioForm(forms.ModelForm):
         cleaned_data = super().clean()
         empresa = cleaned_data.get('empresa_convenio')
         rut_ingresado = cleaned_data.get('rut_empresa')
+        clave_ingresada = cleaned_data.get('clave_empresa')
         p1 = cleaned_data.get('password')
         p2 = cleaned_data.get('confirmar_password')
 
         if p1 and p2 and p1 != p2:
             self.add_error('confirmar_password', "Las contraseñas no coinciden.")
+
+        # Validación estricta de la clave fija de la empresa
+        if clave_ingresada != "empresa123":
+            self.add_error('clave_empresa', "La clave de convenio es incorrecta (debe ser empresa123).")
 
         if empresa and rut_ingresado:
             if empresa.rut.strip().lower() != rut_ingresado.strip().lower():
