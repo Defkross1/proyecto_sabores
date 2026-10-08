@@ -16,9 +16,16 @@ from usuarios.decorators import rol_requerido
 # ==================== VISTA PORTADA E INICIO ====================
 @require_http_methods(["GET"])
 def portada_view(request):
-    # Obtenemos los platos activos creados en la base de datos para mostrarlos en la portada
-    platos_db = PlatoMenu.objects.filter(activo=True)
-    
+    platos_destacados = [
+        {'id': 1, 'nombre': 'Cazuela', 'descripcion': 'Tradicional cazuela casera con presa de carne o pollo, choclo, zapallo y papas.', 'precio': '6.500', 'imagen': 'images/platos/cazuela.jpg'},
+        {'id': 2, 'nombre': 'Pollo Arvejado', 'descripcion': 'Jugoso pollo en salsa arvejada acompañado de arroz graneado.', 'precio': '6.000', 'imagen': 'images/platos/pollo_arvejado.jpg'},
+        {'id': 3, 'nombre': 'Pollo con Ensalada', 'descripcion': 'Pechuga de pollo a la plancha jugosa acompañada de ensalada fresca del día.', 'precio': '5.800', 'imagen': 'images/platos/pollo_con_ensalada.jpg'},
+        {'id': 4, 'nombre': 'Pescado Frito con Puré', 'descripcion': 'Filete de pescado frito dorado y crujiente con suave puré de papas casero.', 'precio': '7.500', 'imagen': 'images/platos/Pescado_Frito_con_Pure.jpg'},
+        {'id': 5, 'nombre': 'Porotos con Rienda', 'descripcion': 'Deliciosos porotos tradicionales con fideos y zapallo al estilo casero.', 'precio': '5.500', 'imagen': 'images/platos/Porotos_con_rienda.jpg'},
+        {'id': 6, 'nombre': 'Bistec a lo Pobre', 'descripcion': 'Abundante bistec de vacuno con papas fritas crujientes, cebolla caramelizada y huevo frito.', 'precio': '9.500', 'imagen': 'images/platos/Bistec_a_lo_Pobre.jpg'},
+        {'id': 7, 'nombre': 'Ensalada César', 'descripcion': 'Lechuga romana crujiente, crutones dorados, queso parmesano, pollo a la plancha y aderezo césar.', 'precio': '5.000', 'imagen': 'images/platos/Ensalada_Cesar.jpg'},
+    ]
+
     chefs = [
         {'nombre': 'Geovanni Huerta', 'especialidad': 'Comida Tradicional Chilena', 'imagen': 'images/chefs/geovanni_huerta.jpg'},
         {'nombre': 'Jeanliette muñoz', 'especialidad': 'Masas y Repostería Casera', 'imagen': 'images/chefs/Jeanliette_muñoz.jpg'},
@@ -26,7 +33,7 @@ def portada_view(request):
         {'nombre': 'Andres Molina', 'especialidad': 'Ensaladas y Comida Saludable', 'imagen': 'images/chefs/andres_molina.jpg'},
     ]
 
-    return render(request, 'pedidos/portada.html', {'platos': platos_db, 'chefs': chefs})
+    return render(request, 'pedidos/portada.html', {'platos': platos_destacados, 'chefs': chefs})
 
 
 # ==================== VISTA CARRITO / PEDIDO DESDE PORTADA ====================

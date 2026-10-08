@@ -27,6 +27,7 @@ class PlatoMenu(models.Model):
     descripcion = models.TextField(verbose_name="Descripción del Plato")
     dia_semana = models.CharField(max_length=12, choices=DIAS, verbose_name="Día Asignado")
     precio = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Precio")
+    imagen = models.ImageField(upload_to='platos/', blank=True, null=True, verbose_name="Imagen del Plato")
     proveedor = models.ForeignKey(Proveedores, on_delete=models.SET_NULL, null=True, blank=True)
     activo = models.BooleanField(default=True)
 
