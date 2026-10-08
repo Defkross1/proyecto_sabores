@@ -10,14 +10,24 @@
         <div class="card-body p-4">
             <form method="post">
                 {% csrf_token %}
-                <p class="text-muted">Selecciona los platos que deseas incluir y elige si prefieres ensalada o consomé para cada uno:</p>
+                <p class="text-muted">Modifica los platos que deseas incluir, ajusta sus acompañamientos o desmarca los que quieras quitar:</p>
                 
                 <div class="row g-3">
                     {% for plato in platos %}
+                    {% comment %} Verificamos si este plato ya estaba seleccionado en el pedido actual {% endcomment %}
+                    {% with item_existente=None %}
+                        {% for item in pedido.items.all %}
+                            {% if item.plato.id == plato.id %}
+                                {% with item_existente=item %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+
                     <div class="col-md-6">
                         <div class="card h-100 border p-3 bg-light">
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" name="seleccionar_{{ plato.id }}" value="1" id="plato_{{ plato.id }}">
+                                <input class="form-check-input" type="checkbox" name="seleccionar_{{ plato.id }}" value="1" id="plato_{{ plato.id }}"
+                                    {% for item in pedido.items.all %}{% if item.plato.id == plato.id %}checked{% endif %}{% endfor %}>
                                 <label class="form-check-label fw-bold" for="plato_{{ plato.id }}">
                                     {{ plato.nombre }} ({{ plato.get_dia_semana_display }}) - <span class="text-success">${{ plato.precio|formato_miles }}</span>
                                 </label>
@@ -27,9 +37,9 @@
                             <div class="mt-auto">
                                 <label class="form-label small fw-bold">Elige acompañamiento:</label>
                                 <select name="acompanamiento_{{ plato.id }}" class="form-select form-select-sm">
-                                    <option value="ENSALADA">🥗 Ensalada</option>
-                                    <option value="CONSOME">🍲 Consomé</option>
-                                    <option value="NINGUNO">Sin acompañamiento</option>
+                                    <option value="ENSALADA" {% for item in pedido.items.all %}{% if item.plato.id == plato.id and item.acompanamiento == 'ENSALADA' %}selected{% endif %}{% endfor %}>🥗 Ensalada</option>
+                                    <option value="CONSOME" {% for item in pedido.items.all %}{% if item.plato.id == plato.id and item.acompanamiento == 'CONSOME' %}selected{% endif %}{% endfor %}>🍲 Consomé</option>
+                                    <option value="NINGUNO" {% for item in pedido.items.all %}{% if item.plato.id == plato.id and item.acompanamiento == 'NINGUNO' %}selected{% endif %}{% endfor %}>Sin acompañamiento</option>
                                 </select>
                             </div>
                         </div>

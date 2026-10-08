@@ -207,6 +207,7 @@ def menu_semanal_cliente(request):
                     comuna="Santiago"
                 )
 
+            # 🌟 Creamos UN SOLO PEDIDO unificado para todos los platos seleccionados en la semana
             pedido = Pedido.objects.create(
                 cliente=request.user,
                 direccion=direccion_bd,
@@ -242,7 +243,7 @@ def menu_semanal_cliente(request):
                 return redirect('menu_semanal')
 
             pedido.recalcular_total()
-            messages.success(request, f"¡Pedido #{pedido.id} realizado con éxito!")
+            messages.success(request, f"¡Pedido unificado #{pedido.id} realizado con éxito!")
             return redirect('mis_pedidos')
 
         except Exception as e:
