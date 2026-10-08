@@ -3,7 +3,7 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from .forms import RegistroClienteForm, LoginForm, DireccionForm
+from .forms import RegistroClienteForm, LoginForm, DireccionForm, RegistroEmpresaConvenioForm
 from .models import DireccionCliente
 from .validators import ReglaContrasenaSaboresValidator, NoContieneNombreValidator
 
@@ -25,6 +25,11 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+def tipo_registro_view(request):
+    if request.user.is_authenticated:
+        return redirigir_segun_rol(request.user)
+    return render(request, 'usuarios/tipo_registro.html')
+
 def registro_cliente(request):
     if request.method == 'POST':
         form = RegistroClienteForm(request.POST)
@@ -36,6 +41,18 @@ def registro_cliente(request):
     else:
         form = RegistroClienteForm()
     return render(request, 'usuarios/registro.html', {'form': form})
+
+def registro_empresa_convenio(request):
+    if request.method == 'POST':
+        form = RegistroEmpresaConvenioForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "¡Cuenta de empresa en convenio creada con éxito!")
+            return redirect('menu_semanal')
+    else:
+        form = RegistroEmpresaConvenioForm()
+    return render(request, 'usuarios/registro_empresa.html', {'form': form})
 
 def redirigir_segun_rol(user):
     if user.rol == 'GERENTE':

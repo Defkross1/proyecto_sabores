@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h2 class="fw-bold mb-3">¿Cómo deseas registrarte?</h2>
+            <p class="text-muted mb-5">Elige la opción que corresponda a tu tipo cuenta para continuar con el registro.</p>
+            
+            <div class="row g-4">
+                <!-- Opción 1: Cliente Empresa en Convenio -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 h-100 p-4 text-center hover-card">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="mb-3 text-primary fs-1">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <h4 class="fw-bold">Cliente Empresa</h4>
+                                <p class="text-muted small">Para trabajadores de empresas que mantienen un convenio activo con Proyecto Sabores.</p>
+                            </div>
+                            <a href="{% url 'registro_empresa' %}" class="btn btn-outline-primary mt-3 w-100 fw-bold">Registrarse con Convenio</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opción 2: Cliente Común -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 h-100 p-4 text-center hover-card">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="mb-3 text-success fs-1">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <h4 class="fw-bold">Cliente Común</h4>
+                                <p class="text-muted small">Registro general e independiente para cualquier cliente particular.</p>
+                            </div>
+                            <a href="{% url 'registro_cliente' %}" class="btn btn-success mt-3 w-100 fw-bold">Registrarse como Común</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
