@@ -7,7 +7,7 @@ from django.db.models import Sum, Q
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.utils.timezone import localtime
-from datetime import datetime
+from datetime import datetime, timedelta
 import zoneinfo
 from .models import PlatoMenu, Proveedor, Pedido, ItemPedido
 from usuarios.models import Usuario, EmpresaConvenio, DireccionCliente
@@ -149,36 +149,31 @@ def carrito_pedido_view(request):
 def menu_semanal_cliente(request):
     chile_tz = zoneinfo.ZoneInfo('America/Santiago')
     now_chile = datetime.now(chile_tz)
-    dia_actual_idx = now_chile.weekday()
-    hora_actual = now_chile.hour
-
-    dias_semana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']
+    
+    start_of_week = now_chile.date() - timedelta(days=now_chile.weekday())
+    
+    dias_semana_info = [
+        {'clave': 'LUNES', 'nombre': 'Lunes', 'fecha': start_of_week + timedelta(days=0)},
+        {'clave': 'MARTES', 'nombre': 'Martes', 'fecha': start_of_week + timedelta(days=1)},
+        {'clave': 'MIERCOLES', 'nombre': 'Miércoles', 'fecha': start_of_week + timedelta(days=2)},
+        {'clave': 'JUEVES', 'nombre': 'Jueves', 'fecha': start_of_week + timedelta(days=3)},
+        {'clave': 'VIERNES', 'nombre': 'Viernes', 'fecha': start_of_week + timedelta(days=4)},
+    ]
+    
     menus_por_dia = {}
     dias_habilitados = {}
+    fechas_dias = {}
 
-    for idx, dia in enumerate(dias_semana):
+    for item in dias_semana_info:
+        dia = item['clave']
+        fechas_dias[dia] = item['fecha']
+        
         platos = PlatoMenu.objects.filter(dia_semana=dia, activo=True)
         if not platos.exists():
             platos = PlatoMenu.objects.filter(activo=True)
         menus_por_dia[dia] = platos
-
-        if dia_actual_idx == 4:
-            if idx == 0:
-                dias_habilitados[dia] = True
-            else:
-                dias_habilitados[dia] = False
-        elif dia_actual_idx >= 5:
-            if idx == 0:
-                dias_habilitados[dia] = True
-            else:
-                dias_habilitados[dia] = False
-        else:
-            if idx < dia_actual_idx:
-                dias_habilitados[dia] = False
-            elif idx == dia_actual_idx and hora_actual >= 15:
-                dias_habilitados[dia] = False
-            else:
-                dias_habilitados[dia] = True
+        
+        dias_habilitados[dia] = True
 
     class DiasEstado:
         pass
@@ -238,10 +233,8 @@ def menu_semanal_cliente(request):
             )
 
             seleccion_realizada = False
-            for dia in dias_semana:
-                if not dias_habilitados.get(dia, False):
-                    continue
-
+            dias_keys = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']
+            for dia in dias_keys:
                 platos_ids = request.POST.getlist(f'plato_{dia}')
                 for plato_id in platos_ids:
                     if plato_id:
@@ -268,7 +261,7 @@ def menu_semanal_cliente(request):
                             pass
 
             if not seleccion_realizada:
-                messages.error(request, "Debes seleccionar al menos un plato válido en los días habilitados.")
+                messages.error(request, "Debes seleccionar al menos un plato válido.")
                 return redirect('menu_semanal')
 
             pedido.recalcular_total()
@@ -283,6 +276,7 @@ def menu_semanal_cliente(request):
         'menus_por_dia': menus_por_dia,
         'dias_habilitados': dias_habilitados,
         'estado_dias': estado_dias,
+        'fechas_dias': fechas_dias,
         'direcciones': direcciones,
         'horarios': Pedido.HORARIOS_ENTREGA,
     })
