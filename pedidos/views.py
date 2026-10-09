@@ -458,6 +458,49 @@ def gerente_dashboard(request):
             )
             messages.success(request, "Empresa en convenio agregada.")
 
+        elif accion == 'crear_cliente_comun':
+            nombre = request.POST.get('nombre')
+            apellido = request.POST.get('apellido')
+            email = request.POST.get('email')
+            rut = request.POST.get('rut')
+            password = request.POST.get('password')
+
+            if Usuario.objects.filter(email=email).exists():
+                messages.error(request, "El correo electrónico ya está registrado.")
+            else:
+                Usuario.objects.create_user(
+                    email=email,
+                    password=password,
+                    nombre=nombre,
+                    apellido=apellido,
+                    rut=rut,
+                    rol='CLIENTE'
+                )
+                messages.success(request, f"Cliente común {nombre} {apellido} creado con éxito.")
+
+        elif accion == 'crear_cliente_convenio':
+            nombre = request.POST.get('nombre')
+            apellido = request.POST.get('apellido')
+            email = request.POST.get('email')
+            rut = request.POST.get('rut')
+            empresa_id = request.POST.get('empresa_convenio')
+            password = request.POST.get('password')
+
+            if Usuario.objects.filter(email=email).exists():
+                messages.error(request, "El correo electrónico ya está registrado.")
+            else:
+                empresa = get_object_or_404(EmpresaConvenio, id=empresa_id)
+                Usuario.objects.create_user(
+                    email=email,
+                    password=password,
+                    nombre=nombre,
+                    apellido=apellido,
+                    rut=rut,
+                    rol='CLIENTE',
+                    empresa_convenio=empresa
+                )
+                messages.success(request, f"Cliente de convenio {nombre} ({empresa.nombre}) creado con éxito.")
+
         return redirect('gerente_dashboard')
 
     return render(request, 'pedidos/gerente_dashboard.html', {

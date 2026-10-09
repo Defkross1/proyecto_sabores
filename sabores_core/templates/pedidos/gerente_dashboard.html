@@ -7,6 +7,15 @@
         <h2 class="fw-bold mb-0">Panel de Administración General (Gerencia)</h2>
     </div>
 
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <!-- DASHBOARD DE MÉTRICAS Y GANANCIAS DEL DÍA -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -86,6 +95,107 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: CREACIÓN DE EMPRESAS Y CLIENTES DESDE GERENCIA -->
+    <div class="row g-4 mb-4">
+        <!-- Crear Empresa en Convenio -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0 fw-bold">Crear Empresa en Convenio</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="crear_convenio">
+                        <div class="mb-2">
+                            <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre de la Empresa" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="rut" class="form-control form-control-sm" placeholder="RUT (ej: 76.123.456-7)" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="direccion" class="form-control form-control-sm" placeholder="Dirección corporativa" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" name="telefono" class="form-control form-control-sm" placeholder="Teléfono" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-sm w-100 fw-bold">Registrar Empresa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crear Cliente Común -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0 fw-bold">Crear Cliente Común</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="crear_cliente_comun">
+                        <div class="mb-2">
+                            <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="apellido" class="form-control form-control-sm" placeholder="Apellido" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="email" name="email" class="form-control form-control-sm" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="rut" class="form-control form-control-sm" placeholder="RUT" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" class="form-control form-control-sm" placeholder="Contraseña" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Crear Cliente Común</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crear Cliente de Convenio -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0 fw-bold">Crear Cliente de Convenio</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="crear_cliente_convenio">
+                        <div class="mb-2">
+                            <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="apellido" class="form-control form-control-sm" placeholder="Apellido" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="email" name="email" class="form-control form-control-sm" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="rut" class="form-control form-control-sm" placeholder="RUT" required>
+                        </div>
+                        <div class="mb-2">
+                            <select name="empresa_convenio" class="form-select form-select-sm" required>
+                                <option value="">-- Seleccionar Empresa --</option>
+                                {% for conv in convenios %}
+                                    <option value="{{ conv.id }}">{{ conv.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" class="form-control form-control-sm" placeholder="Contraseña" required>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Crear Cliente Convenio</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
