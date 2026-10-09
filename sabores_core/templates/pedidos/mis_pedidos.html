@@ -28,7 +28,7 @@
             <div class="text-end">
                 <p class="mb-0 text-uppercase fw-bold small opacity-75">Saldo Disponible</p>
                 <h2 class="fw-bold mb-0 display-5 text-success bg-white px-4 py-1 rounded-3 shadow-sm border border-success">
-                    ${{ request.user.saldo_giftcard|formato_miles }}
+                    {{ request.user.saldo_giftcard|formato_miles }}
                 </h2>
             </div>
         </div>
@@ -54,7 +54,7 @@
                             </li>
                         {% endfor %}
                     </ul>
-                    <h4 class="text-end fw-bold">Total a Pagar: ${{ pedido.total|formato_miles }}</h4>
+                    <h4 class="text-end fw-bold">Total a Pagar: {{ pedido.total|formato_miles }}</h4>
 
                     <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
                         <div>
