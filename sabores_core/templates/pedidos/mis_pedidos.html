@@ -16,15 +16,21 @@
         {% endfor %}
     {% endif %}
 
-    <!-- 🌟 BANNER DE LA GIFT CARD EXCLUSIVO PARA CONVENIOS -->
+    <!-- 🌟 BANNER DE LA GIFT CARD EXCLUSIVO PARA CONVENIOS 🌟 -->
     {% if request.user.empresa_convenio %}
     <div class="card shadow border-0 bg-info bg-gradient text-dark mb-4">
-        <div class="card-body d-flex justify-content-between align-items-center">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <h4 class="mb-0 fw-bold">💳 Mi Gift Card Convenio ({{ request.user.empresa_convenio.nombre }})</h4>
-                <small>Tu saldo se descontará automáticamente a medida que realices compras.</small>
+                <small>Tu saldo se descontará automáticamente a medida que realices compras.</small><br>
+                <span class="badge bg-dark mt-2 fs-6">Monto inicial de la tarjeta: $70.000</span>
             </div>
-            <h2 class="fw-bold mb-0 display-6">${{ request.user.saldo_giftcard|formato_miles }}</h2>
+            <div class="text-end">
+                <p class="mb-0 text-uppercase fw-bold small opacity-75">Saldo Disponible</p>
+                <h2 class="fw-bold mb-0 display-5 text-success bg-white px-4 py-1 rounded-3 shadow-sm border border-success">
+                    ${{ request.user.saldo_giftcard|formato_miles }}
+                </h2>
+            </div>
         </div>
     </div>
     {% endif %}
