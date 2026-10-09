@@ -99,10 +99,10 @@
         </div>
     </div>
 
-    <!-- SECCIÓN: CREACIÓN DE EMPRESAS Y CLIENTES DESDE GERENCIA -->
+    <!-- SECCIÓN: CREACIÓN DE EMPRESAS Y PERSONAL DESDE GERENCIA -->
     <div class="row g-4 mb-4">
         <!-- Crear Empresa en Convenio -->
-        <div class="col-md-4">
+        <div class="col-xl-3 col-md-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-secondary text-white">
                     <h6 class="mb-0 fw-bold">Crear Empresa en Convenio</h6>
@@ -130,7 +130,7 @@
         </div>
 
         <!-- Crear Cliente Común -->
-        <div class="col-md-4">
+        <div class="col-xl-3 col-md-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-primary text-white">
                     <h6 class="mb-0 fw-bold">Crear Cliente Común</h6>
@@ -161,7 +161,7 @@
         </div>
 
         <!-- Crear Cliente de Convenio -->
-        <div class="col-md-4">
+        <div class="col-xl-3 col-md-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-success text-white">
                     <h6 class="mb-0 fw-bold">Crear Cliente de Convenio</h6>
@@ -198,6 +198,38 @@
                 </div>
             </div>
         </div>
+
+        <!-- 🌟 CREAR CUENTA DE REPARTIDOR 🌟 -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0 fw-bold">Crear Repartidor (Delivery)</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="crear_repartidor">
+                        <div class="mb-2">
+                            <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="apellido" class="form-control form-control-sm" placeholder="Apellido" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="email" name="email" class="form-control form-control-sm" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="rut" class="form-control form-control-sm" placeholder="RUT" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" class="form-control form-control-sm" placeholder="Contraseña" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold text-dark">Registrar Repartidor</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- SEGUIMIENTO DE CONSUMOS Y DELIVERY -->
@@ -246,12 +278,13 @@
         </div>
     </div>
 
-    <!-- LISTADO DE CLIENTES (COMUNES Y EMPRESAS) -->
+    <!-- LISTADO DE CLIENTES Y PERSONAL -->
     <div class="row g-4">
-        <div class="col-md-6">
+        <!-- Clientes Comunes -->
+        <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Clientes Comunes Registrados</h5>
+                    <h5 class="mb-0">Clientes Comunes</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group">
@@ -268,20 +301,42 @@
             </div>
         </div>
 
-        <div class="col-md-6">
+        <!-- Clientes Convenio -->
+        <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Clientes de Empresas en Convenio</h5>
+                    <h5 class="mb-0">Clientes en Convenio</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group">
                         {% for cli in clientes_empresas %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span><strong>{{ cli.nombre }} {{ cli.apellido }}</strong><br><small class="text-muted">{{ cli.email }} | Empresa: {{ cli.empresa_convenio.nombre }}</small></span>
+                            <span><strong>{{ cli.nombre }} {{ cli.apellido }}</strong><br><small class="text-muted">{{ cli.email }} | {{ cli.empresa_convenio.nombre }}</small></span>
                             <span class="badge bg-success">Convenio</span>
                         </li>
                         {% empty %}
                         <li class="list-group-item text-muted">No hay clientes de empresas registrados.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 🌟 LISTA DE PERSONAL (REPARTIDORES, ATENCION) 🌟 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Personal Operativo</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for emp in empleados %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><strong>{{ emp.nombre }} {{ emp.apellido }}</strong><br><small class="text-muted">{{ emp.email }}</small></span>
+                            <span class="badge bg-dark">{{ emp.get_rol_display }}</span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">No hay empleados registrados.</li>
                         {% endfor %}
                     </ul>
                 </div>

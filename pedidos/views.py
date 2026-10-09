@@ -308,7 +308,7 @@ def pagar_pedido(request, pedido_id):
     if request.method == 'POST':
         metodo = request.POST.get('metodo_pago')
         if metodo:
-            # 🌟 LÓGICA DE DESCUENTO PARA LA GIFT CARD DE CONVENIO
+            # LÓGICA DE DESCUENTO PARA LA GIFT CARD DE CONVENIO
             if metodo == 'GIFTCARD':
                 if hasattr(request.user, 'saldo_giftcard') and request.user.saldo_giftcard >= pedido.total:
                     request.user.saldo_giftcard -= pedido.total
@@ -509,10 +509,30 @@ def gerente_dashboard(request):
                     rol='CLIENTE',
                     empresa_convenio=empresa
                 )
-                # 🌟 ASIGNAR SALDO DE $70.000 POR DEFECTO
                 nuevo_user.saldo_giftcard = 70000
                 nuevo_user.save()
                 messages.success(request, f"Cliente de convenio {nombre} creado con Gift Card de $70.000.")
+
+        # 🌟 LÓGICA AÑADIDA PARA CREAR CUENTAS DE REPARTIDORES 🌟
+        elif accion == 'crear_repartidor':
+            nombre = request.POST.get('nombre')
+            apellido = request.POST.get('apellido')
+            email = request.POST.get('email')
+            rut = request.POST.get('rut')
+            password = request.POST.get('password')
+
+            if Usuario.objects.filter(email=email).exists():
+                messages.error(request, "El correo electrónico ya está registrado.")
+            else:
+                Usuario.objects.create_user(
+                    email=email,
+                    password=password,
+                    nombre=nombre,
+                    apellido=apellido,
+                    rut=rut,
+                    rol='REPARTIDOR'
+                )
+                messages.success(request, f"Cuenta de Repartidor para {nombre} {apellido} creada exitosamente.")
 
         return redirect('gerente_dashboard')
 
