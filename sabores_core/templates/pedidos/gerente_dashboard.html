@@ -21,7 +21,7 @@
         <div class="col-md-4">
             <div class="card shadow-sm border-0 bg-success text-white p-3">
                 <h5>Ganancias del Día (Pagadas)</h5>
-                <h3 class="fw-bold mb-0">${{ ganancias_dia|formato_miles }}</h3>
+                <h3 class="fw-bold mb-0">{{ ganancias_dia|formato_miles }}</h3>
             </div>
         </div>
         <div class="col-md-4">
@@ -83,7 +83,7 @@
                         <tr>
                             <td class="fw-bold">{{ menu.nombre }}</td>
                             <td>{{ menu.get_dia_semana_display }}</td>
-                            <td class="text-success">${{ menu.precio|formato_miles }}</td>
+                            <td class="text-success">{{ menu.precio|formato_miles }}</td>
                             <td>
                                 <a href="{% url 'editar_menu_gerente' menu.id %}" class="btn btn-sm btn-outline-primary">Editar</a>
                                 <a href="{% url 'eliminar_elemento' 'menu' menu.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este plato?');">Eliminar</a>
