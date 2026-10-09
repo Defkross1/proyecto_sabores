@@ -1,29 +1,107 @@
 {% extends 'base.html' %}
+{% load formato_moneda %}
 
 {% block content %}
-<h3 class="mb-3">Hoja de Reparto y Logística</h3>
-<div class="row g-3">
-    {% for p in pedidos %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card h-100 shadow-sm border-0 border-start border-warning border-4">
-            <div class="card-body">
-                <h5 class="card-title">Pedido #{{ p.id }} - <span class="badge bg-secondary">{{ p.horario_entrega }}</span></h5>
-                <p class="mb-1"><strong>Cliente:</strong> {{ p.cliente.nombre }} {{ p.cliente.apellido|default:'' }}</p>
-                <p class="mb-1"><strong>Teléfono:</strong> <a href="tel:{{ p.cliente.telefono }}">{{ p.cliente.telefono }}</a></p>
-                <p class="mb-3 text-danger"><strong>Dirección:</strong> {{ p.direccion }}</p>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="pedido_id" value="{{ p.id }}">
-                    <button type="submit" class="btn btn-success w-100">
-                        Marcar como Entregado
-                    </button>
-                </form>
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Panel de Reparto y Logística</h2>
+        <span class="badge bg-dark fs-6">Repartidor: {{ request.user.nombre }}</span>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Gestión de Pedidos y Estado de Pagos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th># Pedido</th>
+                            <th>Cliente & Tipo</th>
+                            <th>Dirección de Entrega</th>
+                            <th>Fecha y Hora</th>
+                            <th>Platos Solicitados</th>
+                            <th>Estado de Pago / Método</th>
+                            <th>Estado Logístico</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ped in pedidos %}
+                        <tr>
+                            <td class="fw-bold">#{{ ped.id }}</td>
+                            <td>
+                                <strong>{{ ped.cliente.nombre }} {{ ped.cliente.apellido }}</strong><br>
+                                {% if ped.cliente.empresa_convenio %}
+                                    <span class="badge bg-success">Convenio: {{ ped.cliente.empresa_convenio.nombre }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Cliente Común</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ped.direccion %}
+                                    {{ ped.direccion.calle_y_numero }}
+                                {% else %}
+                                    <span class="text-muted">Sin dirección registrada</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ ped.fecha_pedido|date:"d/m/Y H:i" }}</small><br>
+                                <span class="badge bg-info text-dark">Horario: {{ ped.horario_entrega }}</span>
+                            </td>
+                            <td>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in ped.items.all %}
+                                        <li>• {{ item.plato.nombre }} ({{ item.get_acompanamiento_display }}) x{{ item.cantidad }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                {% if ped.pagado %}
+                                    <span class="badge bg-success mb-1">¡Ya Pagado!</span><br>
+                                    <small class="text-muted">Método: {{ ped.get_metodo_pago_display|default:"No especificado" }}</small>
+                                {% else %}
+                                    <span class="badge bg-danger mb-1">Pendiente de Pago</span><br>
+                                    <small class="text-muted">Método: {{ ped.get_metodo_pago_display|default:"Por definir" }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-warning text-dark">{{ ped.get_estado_display }}</span>
+                                {% if ped.repartidor %}
+                                    <br><small class="text-muted">Repartidor: {{ ped.repartidor.nombre }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ped.estado != 'ENTREGADO' %}
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="pedido_id" value="{{ ped.id }}">
+                                        <button type="submit" class="btn btn-sm btn-success fw-bold">Marcar Entregado</button>
+                                    </form>
+                                {% else %}
+                                    <span class="badge bg-secondary">Finalizado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No hay pedidos en curso en este momento.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12"><div class="alert alert-info">No hay pedidos pendientes de entrega en este momento.</div></div>
-    {% endfor %}
 </div>
 {% endblock %}

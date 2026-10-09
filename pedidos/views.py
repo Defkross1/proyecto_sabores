@@ -395,7 +395,7 @@ def atencion_dashboard(request):
 
 @rol_requerido(['REPARTIDOR', 'GERENTE'])
 def repartidor_dashboard(request):
-    pedidos_ruta = Pedido.objects.filter(estado__in=['SOLICITADO', 'EN_PREPARACION', 'EN_RUTA'])
+    pedidos_ruta = Pedido.objects.all().order_by('-fecha_pedido')
     
     if request.method == 'POST':
         pedido_id = request.POST.get('pedido_id')
