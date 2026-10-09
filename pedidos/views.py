@@ -308,7 +308,6 @@ def pagar_pedido(request, pedido_id):
     if request.method == 'POST':
         metodo = request.POST.get('metodo_pago')
         if metodo:
-            # LÓGICA DE DESCUENTO PARA LA GIFT CARD DE CONVENIO
             if metodo == 'GIFTCARD':
                 if hasattr(request.user, 'saldo_giftcard') and request.user.saldo_giftcard >= pedido.total:
                     request.user.saldo_giftcard -= pedido.total
@@ -403,17 +402,26 @@ def atencion_dashboard(request):
     return render(request, 'pedidos/atencion_dashboard.html', {'pedidos': pedidos, 'platos': platos, 'estados': Pedido.ESTADOS})
 
 
+# 🌟 DASHBOARD DEL REPARTIDOR CON ACTUALIZACIÓN MÚLTIPLE DE ESTADOS
 @rol_requerido(['REPARTIDOR', 'GERENTE'])
 def repartidor_dashboard(request):
     pedidos_ruta = Pedido.objects.all().order_by('-fecha_pedido')
     
     if request.method == 'POST':
         pedido_id = request.POST.get('pedido_id')
+        nuevo_estado = request.POST.get('nuevo_estado')
+        
         pedido = get_object_or_404(Pedido, id=pedido_id)
-        pedido.estado = 'ENTREGADO'
-        pedido.repartidor = request.user
-        pedido.save()
-        messages.success(request, f"Pedido #{pedido.id} marcado como ENTREGADO.")
+        
+        # Validar que el estado enviado existe en las opciones de Pedido
+        if nuevo_estado in dict(Pedido.ESTADOS):
+            pedido.estado = nuevo_estado
+            pedido.repartidor = request.user
+            pedido.save()
+            messages.success(request, f"Pedido #{pedido.id} actualizado a {pedido.get_estado_display()}.")
+        else:
+            messages.error(request, "Estado no válido.")
+            
         return redirect('repartidor_dashboard')
 
     return render(request, 'pedidos/repartidor_dashboard.html', {'pedidos': pedidos_ruta})
@@ -513,7 +521,6 @@ def gerente_dashboard(request):
                 nuevo_user.save()
                 messages.success(request, f"Cliente de convenio {nombre} creado con Gift Card de $70.000.")
 
-        # 🌟 LÓGICA AÑADIDA PARA CREAR CUENTAS DE REPARTIDORES 🌟
         elif accion == 'crear_repartidor':
             nombre = request.POST.get('nombre')
             apellido = request.POST.get('apellido')

@@ -32,8 +32,8 @@
                             <th>Fecha y Hora</th>
                             <th>Platos Solicitados</th>
                             <th>Estado de Pago / Método</th>
-                            <th>Estado Logístico</th>
-                            <th>Acción</th>
+                            <th>Estado Logístico actual</th>
+                            <th>Acciones de Repartidor</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -83,10 +83,22 @@
                             </td>
                             <td>
                                 {% if ped.estado != 'ENTREGADO' %}
-                                    <form method="post">
+                                    <!-- 🌟 3 BOTONES DE ESTADO PARA EL REPARTIDOR 🌟 -->
+                                    <form method="post" class="d-flex gap-1 flex-wrap">
                                         {% csrf_token %}
                                         <input type="hidden" name="pedido_id" value="{{ ped.id }}">
-                                        <button type="submit" class="btn btn-sm btn-success fw-bold">Marcar Entregado</button>
+                                        
+                                        <button type="submit" name="nuevo_estado" value="EN_PREPARACION" class="btn btn-sm btn-outline-warning fw-bold text-dark" title="Marcar en Espera / Preparación">
+                                            En Espera
+                                        </button>
+                                        
+                                        <button type="submit" name="nuevo_estado" value="EN_RUTA" class="btn btn-sm btn-outline-primary fw-bold" title="Marcar En Ruta">
+                                            En Ruta
+                                        </button>
+                                        
+                                        <button type="submit" name="nuevo_estado" value="ENTREGADO" class="btn btn-sm btn-success fw-bold" title="Marcar como Entregado">
+                                            Entregado
+                                        </button>
                                     </form>
                                 {% else %}
                                     <span class="badge bg-secondary">Finalizado</span>
