@@ -308,6 +308,16 @@ def pagar_pedido(request, pedido_id):
     if request.method == 'POST':
         metodo = request.POST.get('metodo_pago')
         if metodo:
+            # 🌟 LÓGICA DE DESCUENTO PARA LA GIFT CARD DE CONVENIO
+            if metodo == 'GIFTCARD':
+                if hasattr(request.user, 'saldo_giftcard') and request.user.saldo_giftcard >= pedido.total:
+                    request.user.saldo_giftcard -= pedido.total
+                    request.user.save()
+                    messages.success(request, f"Se ha descontado ${pedido.total} de tu Gift Card.")
+                else:
+                    messages.error(request, "Saldo insuficiente en tu Gift Card de Convenio.")
+                    return redirect('mis_pedidos')
+
             pedido.metodo_pago = metodo
             pedido.pagado = True
             pedido.estado = 'EN_PREPARACION'
@@ -490,7 +500,7 @@ def gerente_dashboard(request):
                 messages.error(request, "El correo electrónico ya está registrado.")
             else:
                 empresa = get_object_or_404(EmpresaConvenio, id=empresa_id)
-                Usuario.objects.create_user(
+                nuevo_user = Usuario.objects.create_user(
                     email=email,
                     password=password,
                     nombre=nombre,
@@ -499,7 +509,10 @@ def gerente_dashboard(request):
                     rol='CLIENTE',
                     empresa_convenio=empresa
                 )
-                messages.success(request, f"Cliente de convenio {nombre} ({empresa.nombre}) creado con éxito.")
+                # 🌟 ASIGNAR SALDO DE $70.000 POR DEFECTO
+                nuevo_user.saldo_giftcard = 70000
+                nuevo_user.save()
+                messages.success(request, f"Cliente de convenio {nombre} creado con Gift Card de $70.000.")
 
         return redirect('gerente_dashboard')
 

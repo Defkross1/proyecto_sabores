@@ -19,6 +19,7 @@ class UsuarioManager(BaseUserManager):
         extra_fields.setdefault('rol', 'GERENTE')
         return self.create_user(email, nombre, password, **extra_fields)
 
+
 class EmpresaConvenio(models.Model):
     nombre = models.CharField(max_length=150, unique=True, verbose_name="Nombre Empresa")
     rut = models.CharField(max_length=15, unique=True, verbose_name="RUT Empresa")
@@ -28,6 +29,7 @@ class EmpresaConvenio(models.Model):
 
     def __str__(self):
         return f"{self.nombre} (RUT: {self.rut})"
+
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
     ROLES = [
@@ -55,6 +57,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         verbose_name="Empresa en Convenio"
     )
 
+    # 🌟 NUEVO CAMPO PARA LA GIFT CARD AÑADIDO AQUÍ
+    saldo_giftcard = models.IntegerField(default=0, verbose_name="Saldo Gift Card")
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     fecha_registro = models.DateTimeField(auto_now_add=True)
@@ -67,6 +72,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.nombre} {self.apellido or ''} ({self.get_rol_display()})"
+
 
 class DireccionCliente(models.Model):
     cliente = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="direcciones")

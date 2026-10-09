@@ -4,119 +4,94 @@
 {% block content %}
 <div class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">Mis Pedidos Realizados</h2>
-        <a href="{% url 'portada' %}" class="btn btn-success">
-            <i class="fas fa-plus"></i> Hacer Nuevo Pedido
-        </a>
+        <h2 class="fw-bold mb-0">Mis Pedidos e Historial</h2>
     </div>
 
-    {% if pedidos %}
-        <div class="row g-4">
-            {% for pedido in pedidos %}
-            <div class="col-md-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <span><strong>Pedido #{{ pedido.id }}</strong> - Fecha: {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</span>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-warning text-dark">{{ pedido.get_estado_display|default:pedido.estado }}</span>
-                            
-                            <!-- Botón para Ver / Imprimir Boleta (Bloqueado si no está pagado) -->
-                            {% if pedido.pagado %}
-                                <a href="{% url 'boleta_pedido' pedido.id %}" class="btn btn-info btn-sm text-white">
-                                    <i class="fas fa-receipt"></i> Ver Boleta
-                                </a>
-                            {% else %}
-                                <span class="badge bg-secondary text-white">Boleta Bloqueada (Pendiente de pago)</span>
-                            {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-                            {% if pedido.estado == 'SOLICITADO' and not pedido.pagado %}
-                                <a href="{% url 'editar_pedido' pedido.id %}" class="btn btn-outline-light btn-sm">Editar</a>
-                                <a href="{% url 'eliminar_pedido' pedido.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este pedido?');">Eliminar</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <p class="mb-2"><strong>Horario de Entrega:</strong> {{ pedido.horario_entrega }}</p>
-                        <p class="mb-3"><strong>Dirección:</strong> 
-                            {% if pedido.direccion.calle_y_numero %}
-                                {{ pedido.direccion.calle_y_numero }}{% if pedido.direccion.departamento_oficina %}, Depto/Of: {{ pedido.direccion.departamento_oficina }}{% endif %}, {{ pedido.direccion.comuna }}
-                            {% elif pedido.direccion.direccion %}
-                                {{ pedido.direccion.direccion }}
-                            {% else %}
-                                Dirección corporativa
-                            {% endif %}
-                        </p>
-                        
-                        <h6 class="fw-bold text-muted">Platos solicitados y acompañamientos:</h6>
-                        <ul class="list-group mb-3">
-                            {% for item in pedido.items.all %}
+    <!-- 🌟 BANNER DE LA GIFT CARD EXCLUSIVO PARA CONVENIOS -->
+    {% if request.user.empresa_convenio %}
+    <div class="card shadow border-0 bg-info bg-gradient text-dark mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 fw-bold">💳 Mi Gift Card Convenio ({{ request.user.empresa_convenio.nombre }})</h4>
+                <small>Tu saldo se descontará automáticamente a medida que realices compras.</small>
+            </div>
+            <h2 class="fw-bold mb-0 display-6">${{ request.user.saldo_giftcard|formato_miles }}</h2>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% for pedido in pedidos %}
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Pedido #{{ pedido.id }} - {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</span>
+                    <span class="badge bg-{{ pedido.pagado|yesno:'success,danger' }}">
+                        {{ pedido.pagado|yesno:'Pagado,Pendiente de Pago' }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group mb-3">
+                        {% for item in pedido.items.all %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>{{ item.plato.nombre }}</strong> ({{ item.plato.get_dia_semana_display }})
-                                    <br>
-                                    <small class="text-muted">Acompañamiento: 
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success">
-                                            {% if item.acompanamiento == 'ENSALADA' %}🥗 Ensalada
-                                            {% elif item.acompanamiento == 'CONSOME' %}🍲 Consomé
-                                            {% else %}Sin acompañamiento{% endif %}
-                                        </span>
-                                    </small>
-                                </div>
-                                <span class="text-success fw-bold fs-5">{{ item.precio_unitario|formato_miles }}</span>
+                                <span>{{ item.plato.nombre }} ({{ item.get_acompanamiento_display }}) x{{ item.cantidad }}</span>
+                                <span class="fw-bold text-success">${{ item.precio_unitario|formato_miles }}</span>
                             </li>
-                            {% empty %}
-                            <li class="list-group-item text-muted">No hay platos asociados a este pedido.</li>
-                            {% endfor %}
-                        </ul>
+                        {% endfor %}
+                    </ul>
+                    <h4 class="text-end fw-bold">Total a Pagar: ${{ pedido.total|formato_miles }}</h4>
 
-                        <!-- TOTAL Y OPCIÓN DE PAGO -->
-                        <div class="border-top pt-3">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold mb-0">Total a Pagar:</h5>
-                                <h4 class="fw-bold text-success mb-0">{{ pedido.total|formato_miles }}</h4>
-                            </div>
-
+                    <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
+                        <div>
+                            <span class="badge bg-warning text-dark fs-6">{{ pedido.get_estado_display }}</span>
+                        </div>
+                        <div>
                             {% if not pedido.pagado %}
-                            <form method="post" action="{% url 'pagar_pedido' pedido.id %}" class="bg-light p-3 rounded border">
-                                {% csrf_token %}
-                                <label class="form-label fw-bold text-dark">Selecciona tu método de pago:</label>
-                                <div class="row g-2 align-items-center">
-                                    <div class="col-md-8">
-                                        <select name="metodo_pago" class="form-select form-select-sm" required>
-                                            <option value="">-- Selecciona forma de pago --</option>
-                                            <optgroup label="Pago al Delivery">
-                                                <option value="DELIVERY_EFECTIVO">💵 Efectivo al Delivery</option>
-                                                <option value="DELIVERY_TARJETA">💳 Tarjeta al Delivery</option>
-                                                <option value="DELIVERY_TRANSFERENCIA">📱 Transferencia al Delivery</option>
-                                            </optgroup>
-                                            <optgroup label="Pago en el Local">
-                                                <option value="LOCAL_EFECTIVO">💵 Efectivo en el Local</option>
-                                                <option value="LOCAL_TARJETA">💳 Tarjeta en el Local</option>
-                                                <option value="LOCAL_TRANSFERENCIA">📱 Transferencia en el Local</option>
-                                            </optgroup>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Pagar y Desbloquear Boleta</button>
-                                    </div>
-                                </div>
-                            </form>
+                                <form method="post" action="{% url 'pagar_pedido' pedido.id %}" class="d-flex gap-2 align-items-center">
+                                    {% csrf_token %}
+                                    <select name="metodo_pago" class="form-select form-select-sm" required>
+                                        <option value="">-- Seleccionar Medio de Pago --</option>
+                                        <option value="EFECTIVO">Efectivo</option>
+                                        <option value="TARJETA">Tarjeta (Débito/Crédito)</option>
+                                        <option value="TRANSFERENCIA">Transferencia / QR</option>
+                                        
+                                        <!-- OPCIÓN DE PAGO CON GIFT CARD SI ES CLIENTE DE CONVENIO -->
+                                        {% if request.user.empresa_convenio %}
+                                            <option value="GIFTCARD">💳 Usar Saldo Gift Card</option>
+                                        {% endif %}
+                                    </select>
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold px-4">Pagar</button>
+                                </form>
                             {% else %}
-                                <div class="alert alert-success py-2 mb-0 small text-center">
-                                    ✅ Pagado mediante: <strong>{{ pedido.get_metodo_pago_display }}</strong>
-                                </div>
+                                <a href="{% url 'boleta_pedido' pedido.id %}" class="btn btn-primary btn-sm fw-bold px-4">🧾 Ver Mi Boleta</a>
+                            {% endif %}
+                            
+                            {% if pedido.estado == 'SOLICITADO' and not pedido.pagado %}
+                                <a href="{% url 'editar_pedido' pedido.id %}" class="btn btn-warning btn-sm fw-bold ms-2">Editar Platos</a>
+                                <a href="{% url 'eliminar_pedido' pedido.id %}" class="btn btn-outline-danger btn-sm fw-bold ms-2" onclick="return confirm('¿Seguro que deseas eliminar este pedido?');">Eliminar Orden</a>
                             {% endif %}
                         </div>
-
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
-    {% else %}
-        <div class="alert alert-info text-center py-4">
-            <p class="mb-0 fs-5">Aún no has registrado ningún pedido.</p>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-secondary text-center p-4 shadow-sm rounded-3">
+                <h5 class="text-muted">Aún no tienes pedidos registrados en tu historial.</h5>
+                <a href="{% url 'menu_semanal' %}" class="btn btn-success mt-2">Ir a Planificar mi Menú</a>
+            </div>
         </div>
-    {% endif %}
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
