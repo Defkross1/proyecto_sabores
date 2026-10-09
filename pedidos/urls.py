@@ -15,4 +15,6 @@ urlpatterns = [
     path('gerente/', views.gerente_dashboard, name='gerente_dashboard'),
     path('gerente/menu/editar/<int:plato_id>/', views.editar_menu_gerente, name='editar_menu_gerente'),
     path('gerente/eliminar/<str:tipo>/<int:item_id>/', views.eliminar_elemento, name='eliminar_elemento'),
+    path('gerente/editar-usuario/<int:usuario_id>/', views.editar_usuario_gerente, name='editar_usuario_gerente'),
+    path('gerente/editar-empresa/<int:empresa_id>/', views.editar_empresa_gerente, name='editar_empresa_gerente'),
 ]

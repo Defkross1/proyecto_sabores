@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm mx-auto" style="max-width: 500px;">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Editar Empresa: {{ empresa.nombre }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label>Nombre de la Empresa</label>
+                    <input type="text" name="nombre" class="form-control" value="{{ empresa.nombre }}" required>
+                </div>
+                <div class="mb-3">
+                    <label>RUT Comercial</label>
+                    <input type="text" name="rut" class="form-control" value="{{ empresa.rut }}" required>
+                </div>
+                <div class="mb-3">
+                    <label>Dirección</label>
+                    <input type="text" name="direccion" class="form-control" value="{{ empresa.direccion }}" required>
+                </div>
+                <div class="mb-4">
+                    <label>Teléfono</label>
+                    <input type="text" name="telefono" class="form-control" value="{{ empresa.telefono }}" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 fw-bold">Guardar Empresa</button>
+                <a href="{% url 'gerente_dashboard' %}" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
