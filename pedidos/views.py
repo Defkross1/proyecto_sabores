@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.timezone import localtime
 from datetime import datetime, timedelta
 import zoneinfo
+import re  # 🌟 IMPORTACIÓN PARA VALIDAR EL RUT
 from .models import PlatoMenu, Proveedor, Pedido, ItemPedido
 from usuarios.models import Usuario, EmpresaConvenio, DireccionCliente
 from usuarios.decorators import rol_requerido
@@ -34,7 +35,6 @@ def portada_view(request):
     ]
 
     return render(request, 'pedidos/portada.html', {'platos': platos_destacados, 'chefs': chefs})
-
 
 # ==================== VISTA CARRITO / PEDIDO DESDE PORTADA ====================
 @require_http_methods(["GET", "POST"])
@@ -142,7 +142,6 @@ def carrito_pedido_view(request):
             messages.error(request, "No existe un trabajador registrado con ese RUT en la empresa seleccionada.")
 
     return render(request, 'pedidos/carrito.html', {'empresas': empresas, 'plato': plato_seleccionado})
-
 
 # ==================== VISTA MENÚ SEMANAL ====================
 @login_required
@@ -281,12 +280,10 @@ def menu_semanal_cliente(request):
         'horarios': Pedido.HORARIOS_ENTREGA,
     })
 
-
 @login_required
 def mis_pedidos(request):
     pedidos = request.user.pedidos.all().order_by('-fecha_pedido')
     return render(request, 'pedidos/mis_pedidos.html', {'pedidos': pedidos})
-
 
 @login_required
 def boleta_pedido(request, pedido_id):
@@ -300,7 +297,6 @@ def boleta_pedido(request, pedido_id):
         return redirect('mis_pedidos')
 
     return render(request, 'pedidos/boleta.html', {'pedido': pedido})
-
 
 @login_required
 def pagar_pedido(request, pedido_id):
@@ -326,7 +322,6 @@ def pagar_pedido(request, pedido_id):
             messages.error(request, "Debes seleccionar un método de pago.")
     return redirect('mis_pedidos')
 
-
 @login_required
 def eliminar_pedido_cliente(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id, cliente=request.user)
@@ -336,7 +331,6 @@ def eliminar_pedido_cliente(request, pedido_id):
     else:
         messages.error(request, "No se puede eliminar un pedido que ya está pagado o en proceso.")
     return redirect('mis_pedidos')
-
 
 @login_required
 def editar_pedido_cliente(request, pedido_id):
@@ -382,7 +376,6 @@ def editar_pedido_cliente(request, pedido_id):
         'platos': platos_disponibles,
     })
 
-
 # ==================== VISTAS DE EMPLEADOS / GERENCIA BLINDADAS ====================
 @rol_requerido(['ATENCION', 'GERENTE'])
 def atencion_dashboard(request):
@@ -401,8 +394,6 @@ def atencion_dashboard(request):
 
     return render(request, 'pedidos/atencion_dashboard.html', {'pedidos': pedidos, 'platos': platos, 'estados': Pedido.ESTADOS})
 
-
-# 🌟 DASHBOARD DEL REPARTIDOR CON ACTUALIZACIÓN MÚLTIPLE DE ESTADOS
 @rol_requerido(['REPARTIDOR', 'GERENTE'])
 def repartidor_dashboard(request):
     pedidos_ruta = Pedido.objects.all().order_by('-fecha_pedido')
@@ -413,7 +404,6 @@ def repartidor_dashboard(request):
         
         pedido = get_object_or_404(Pedido, id=pedido_id)
         
-        # Validar que el estado enviado existe en las opciones de Pedido
         if nuevo_estado in dict(Pedido.ESTADOS):
             pedido.estado = nuevo_estado
             pedido.repartidor = request.user
@@ -426,7 +416,7 @@ def repartidor_dashboard(request):
 
     return render(request, 'pedidos/repartidor_dashboard.html', {'pedidos': pedidos_ruta})
 
-
+# 🌟 DASHBOARD GERENCIA - CON VALIDACIÓN DE RUT 🌟
 @rol_requerido(['GERENTE'])
 def gerente_dashboard(request):
     chile_tz = zoneinfo.ZoneInfo('America/Santiago')
@@ -448,6 +438,11 @@ def gerente_dashboard(request):
 
     if request.method == 'POST':
         accion = request.POST.get('accion')
+
+        # Función para validar el formato de RUT
+        def es_rut_valido(rut_str):
+            if not rut_str: return False
+            return re.match(r'^\d{1,2}\.?\d{3}\.?\d{3}-[0-9Kk]$', rut_str.strip()) is not None
 
         if accion == 'crear_menu':
             PlatoMenu.objects.create(
@@ -483,7 +478,9 @@ def gerente_dashboard(request):
             rut = request.POST.get('rut')
             password = request.POST.get('password')
 
-            if Usuario.objects.filter(email=email).exists():
+            if not es_rut_valido(rut):
+                messages.error(request, "Error: El RUT ingresado es inválido (Debe terminar en guion y un solo dígito o K).")
+            elif Usuario.objects.filter(email=email).exists():
                 messages.error(request, "El correo electrónico ya está registrado.")
             else:
                 Usuario.objects.create_user(
@@ -504,7 +501,9 @@ def gerente_dashboard(request):
             empresa_id = request.POST.get('empresa_convenio')
             password = request.POST.get('password')
 
-            if Usuario.objects.filter(email=email).exists():
+            if not es_rut_valido(rut):
+                messages.error(request, "Error: El RUT ingresado es inválido (Debe terminar en guion y un solo dígito o K).")
+            elif Usuario.objects.filter(email=email).exists():
                 messages.error(request, "El correo electrónico ya está registrado.")
             else:
                 empresa = get_object_or_404(EmpresaConvenio, id=empresa_id)
@@ -528,7 +527,9 @@ def gerente_dashboard(request):
             rut = request.POST.get('rut')
             password = request.POST.get('password')
 
-            if Usuario.objects.filter(email=email).exists():
+            if not es_rut_valido(rut):
+                messages.error(request, "Error: El RUT ingresado es inválido (Debe terminar en guion y un solo dígito o K).")
+            elif Usuario.objects.filter(email=email).exists():
                 messages.error(request, "El correo electrónico ya está registrado.")
             else:
                 Usuario.objects.create_user(
@@ -555,7 +556,6 @@ def gerente_dashboard(request):
         'dias': PlatoMenu.DIAS
     })
 
-
 @rol_requerido(['GERENTE'])
 def editar_menu_gerente(request, plato_id):
     plato = get_object_or_404(PlatoMenu, id=plato_id)
@@ -568,7 +568,6 @@ def editar_menu_gerente(request, plato_id):
         messages.success(request, "Plato actualizado con éxito.")
         return redirect('gerente_dashboard')
     return render(request, 'pedidos/editar_menu.html', {'plato': plato, 'dias': PlatoMenu.DIAS})
-
 
 @rol_requerido(['GERENTE'])
 def eliminar_elemento(request, tipo, item_id):

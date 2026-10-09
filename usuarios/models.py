@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.core.validators import RegexValidator
 
 
 class UsuarioManager(BaseUserManager):
@@ -42,7 +43,14 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, db_index=True, verbose_name="Correo Electrónico")
     nombre = models.CharField(max_length=100, verbose_name="Nombre")
     apellido = models.CharField(max_length=100, blank=True, null=True, verbose_name="Apellido")
-    rut = models.CharField(max_length=15, blank=True, null=True, unique=True, verbose_name="Rut")
+    
+    # 🌟 VALIDADOR ESTRICTO DE RUT
+    rut_validador = RegexValidator(
+        regex=r'^\d{1,2}\.?\d{3}\.?\d{3}-[0-9Kk]$',
+        message="Formato de RUT inválido. Debe terminar con un guion y un solo número o letra K (Ej: 12.345.678-9)."
+    )
+    rut = models.CharField(max_length=15, blank=True, null=True, unique=True, verbose_name="Rut", validators=[rut_validador])
+    
     telefono = models.CharField(max_length=20, verbose_name="Teléfono")
     direccion = models.CharField(max_length=255, blank=True, null=True, verbose_name="Dirección")
     cargo = models.CharField(max_length=100, blank=True, null=True, verbose_name="Cargo")
@@ -57,7 +65,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         verbose_name="Empresa en Convenio"
     )
 
-    # 🌟 NUEVO CAMPO PARA LA GIFT CARD AÑADIDO AQUÍ
+    # 🌟 CAMPO PARA LA GIFT CARD AÑADIDO
     saldo_giftcard = models.IntegerField(default=0, verbose_name="Saldo Gift Card")
 
     is_active = models.BooleanField(default=True)
